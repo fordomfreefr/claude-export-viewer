@@ -1,0 +1,203 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<div class="site-header">
+  <label class="lang-picker" {{ attr("title", "web.language") }}>
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>
+    <select id="lang-select" {{ attr("aria-label", "web.language") }}></select>
+  </label>
+  <h1>{{ T("web.site_title") }}</h1>
+  <p class="subtitle">{{ T("web.index.count", n=conversations | length) }}{% if n_deleted %} {{ T("web.index.deleted_count", n=n_deleted) }}{% endif %}
+  {%- if latest_export %}<br><span class="latest-export">{{ T("web.index.latest_export", date=latest_export) }}</span>{% endif %}</p>
+</div>
+<section class="admin-bar" id="admin-bar" hidden>
+  <div class="admin-row">
+    <button type="button" class="admin-btn" id="admin-import" aria-expanded="false" aria-controls="admin-panel" {{ attr("title", "web.import_title") }}>{{ T("web.import") }}</button>
+    <button type="button" class="admin-btn" id="topics-manage" aria-expanded="false" aria-controls="topics-manager" hidden>{{ T("web.topics.manage") }}</button>
+    <span class="admin-version">version {{ version }}</span>
+  </div>
+  <div class="admin-row admin-downloads" id="admin-downloads" hidden>
+    <span>{{ T("web.downloads.label") }}</span>
+    <code id="dl-path"></code>
+    <span class="dl-system" id="dl-system" hidden>{{ T("web.downloads.system") }}</span>
+    <button type="button" class="admin-btn small" id="dl-change" aria-expanded="false" aria-controls="dl-form">{{ T("web.downloads.change") }}</button>
+    <form class="dl-form" id="dl-form" hidden>
+      <input type="text" id="dl-input" spellcheck="false" autocomplete="off" {{ attr("placeholder", "web.downloads.placeholder") }}>
+      <button type="submit" class="admin-btn small">{{ T("web.downloads.save") }}</button>
+      <button type="button" class="admin-btn small" id="dl-cancel">{{ T("web.downloads.cancel") }}</button>
+      <div class="dl-hint">{{ T("web.downloads.hint") }}</div>
+      <div class="dl-error" id="dl-error" hidden></div>
+    </form>
+  </div>
+  <div class="topics-manager" id="topics-manager" hidden>
+    <div class="topics-manager-head">
+      <strong>{{ T("web.topics.manage_title") }}</strong>
+      <button type="button" class="admin-close" id="topics-close" {{ attr("title", "web.close") }}><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <p class="topics-empty" id="topics-empty">{{ T("web.topics.empty") }}</p>
+    <ul class="topics-list" id="topics-list"></ul>
+    <div class="dl-error" id="topics-error" hidden></div>
+  </div>
+  <div class="admin-panel" id="admin-panel" hidden>
+    <button type="button" class="admin-close" id="admin-close" {{ attr("title", "web.close") }}><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="admin-log" id="admin-log"></div>
+  </div>
+</section>
+<div class="filter-bar">
+  <input type="search" class="search-box" id="search" {{ attr("placeholder", "web.search") }} autocomplete="off">
+  <div class="filter-controls">
+    {% if user_map | length > 1 %}
+    <select id="filter-user" class="filter-select">
+      <option value="" data-i18n="web.all_users">{{ t("web.all_users") }}</option>
+      {% for uuid, name in user_map | dictsort(by='value') %}
+      <option value="{{ uuid }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if project_map %}
+    <select id="filter-project" class="filter-select">
+      <option value="" data-i18n="web.all_projects">{{ t("web.all_projects") }}</option>
+      {% for uuid, name in project_map | dictsort(by='value') %}
+      <option value="{{ uuid }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {% if n_deleted %}
+    <select id="filter-deleted" class="filter-select">
+      <option value="" data-i18n="web.filter.all">{{ t("web.filter.all") }}</option>
+      <option value="alive" data-i18n="web.filter.alive">{{ t("web.filter.alive") }}</option>
+      <option value="deleted" data-i18n="web.filter.deleted">{{ t("web.filter.deleted") }}</option>
+    </select>
+    {% endif %}
+    <select id="filter-topic" class="filter-select" hidden>
+      <option value="" data-i18n="web.topics.all">{{ t("web.topics.all") }}</option>
+      <option value=" " data-i18n="web.topics.none_filter">{{ t("web.topics.none_filter") }}</option>
+    </select>
+    <select id="sort-by" class="filter-select" {{ attr("title", "web.sort.title") }}>
+      {% for value in ("date-desc", "date-asc", "activity-desc", "activity-asc", "name-asc", "name-desc", "messages-desc", "messages-asc") %}
+      <option value="{{ value }}" data-i18n="web.sort.{{ value }}">{{ t("web.sort." ~ value) }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="result-count" id="result-count" aria-live="polite"></div>
+</div>
+<ul class="conversation-list" id="conversation-list">
+  {% for convo in conversations %}
+  <li class="conversation-item"
+      data-name="{{ (convo.name or t('web.untitled')) | lower }}"
+      data-user="{{ convo.account_uuid }}"
+      data-project="{{ convo.project_uuid or '' }}"
+      data-date="{{ convo.created_at.isoformat() if convo.created_at else '' }}"
+      data-activity="{{ convo.last_activity.isoformat() if convo.last_activity else '' }}"
+      data-messages="{{ convo.n_messages }}"
+      data-deleted="{{ '1' if convo.deleted_since else '' }}"
+      data-uuid="{{ convo.uuid }}">
+    <a href="conversations/{{ convo.filename }}">
+      <div class="conversation-name">{% if convo.name %}{{ convo.name }}{% else %}{{ T("web.untitled") }}{% endif %}
+        {%- if convo.deleted_since %} <span class="deleted-badge" data-i18n="web.deleted_on_claude" {{ attr("title", "web.deleted_badge_title", date=convo.deleted_since) }}{{ args(date=convo.deleted_since) }}>{{ t("web.deleted_on_claude") }}</span>{% endif %}
+        {%- if convo.other_versions %} <span class="versions-badge" data-i18n="web.badge.versions" {{ attr("title", "web.badge.versions_title") }}{{ args(n=convo.other_versions) }}>{{ t("web.badge.versions", n=convo.other_versions) }}</span>{% endif %}
+        {%- if convo.removed_parts %} <span class="versions-badge" data-i18n="web.badge.removed" {{ attr("title", "web.badge.removed_title") }}{{ args(n=convo.removed_parts) }}>{{ t("web.badge.removed", n=convo.removed_parts) }}</span>{% endif %}
+      </div>
+      <div class="conversation-meta">
+        {%- if convo.created_at %}{{ date(convo.created_at) }}{% endif %}
+        {%- if convo.active_later %} &middot; {{ T("web.index.last_exchange", date=LocalDate(convo.last_activity)) }}{% endif %}
+        &middot; {{ T("web.messages", n=convo.n_messages) }}
+        {%- if convo.account_uuid and user_map.get(convo.account_uuid) and user_map | length > 1 %}
+        &middot; {{ user_map[convo.account_uuid] }}
+        {%- endif %}
+        {%- if convo.project_uuid and project_map.get(convo.project_uuid) %}
+        &middot; {{ project_map[convo.project_uuid] }}
+        {%- endif %}
+      </div>
+    </a>
+    <div class="topic-cell"></div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% include "_page_nav.html.j2" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="topics-data.js"></script>
+<script src="topics.js"></script>
+<script>
+(function () {
+  var search = document.getElementById("search");
+  var selects = ["filter-user", "filter-project", "filter-deleted", "filter-topic"].map(function (id) { return document.getElementById(id); });
+  var sortSelect = document.getElementById("sort-by");
+  var list = document.getElementById("conversation-list");
+  var counter = document.getElementById("result-count");
+  var items = Array.prototype.slice.call(list.querySelectorAll(".conversation-item"));
+  var FILTERS = "cev-index-filtres", SORT = "cev-index-tri";  // remembered by the browser
+
+
+  function applyFilters() {
+    var q = search.value.trim().toLowerCase();
+    var user = selects[0] ? selects[0].value : "";
+    var project = selects[1] ? selects[1].value : "";
+    var del = selects[2] ? selects[2].value : "";
+    var topic = selects[3].value;  // "" every topic, " " without topic
+    var shown = 0;
+    items.forEach(function (item) {
+      var ok = (!q || item.dataset.name.indexOf(q) >= 0)
+        && (!user || item.dataset.user === user)
+        && (!project || item.dataset.project === project)
+        && (!del || (del === "deleted") === (item.dataset.deleted === "1"))
+        && (!topic || (item.dataset.topic || " ") === topic);
+      item.style.display = ok ? "" : "none";
+      if (ok) { shown++; }
+    });
+    counter.textContent = shown === items.length ? CEV.t("web.index.count", { n: items.length })
+      : (shown === 0 ? CEV.t("web.index.none_of", { n: items.length })
+        : CEV.t("web.index.shown_of", { shown: shown, n: items.length }));
+    try {
+      sessionStorage.setItem(FILTERS, JSON.stringify({ q: search.value, s: selects.map(function (el) { return el ? el.value : ""; }) }));
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  function by(key, dir) {
+    return function (a, b) { return dir * (a.dataset[key] || "").localeCompare(b.dataset[key] || ""); };
+  }
+  var SORTS = {
+    "date-desc": by("date", -1), "date-asc": by("date", 1),
+    "activity-desc": by("activity", -1), "activity-asc": by("activity", 1),
+    "name-asc": function (a, b) { return a.dataset.name.localeCompare(b.dataset.name, CEV.lang()); },
+    "name-desc": function (a, b) { return b.dataset.name.localeCompare(a.dataset.name, CEV.lang()); },
+    "messages-desc": function (a, b) { return (+b.dataset.messages) - (+a.dataset.messages); },
+    "messages-asc": function (a, b) { return (+a.dataset.messages) - (+b.dataset.messages); }
+  };
+
+  function applySort() {
+    var cmp = SORTS[sortSelect.value] || SORTS["date-desc"];
+    items.slice().sort(cmp).forEach(function (item) { list.appendChild(item); });
+    try { localStorage.setItem(SORT, sortSelect.value); } catch (e) { /* storage unavailable */ }
+  }
+
+  CEVTopics.init(items);  // topic of each conversation, menus and filter options
+  // restore the last search, filters and order
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(FILTERS) || "null");
+    if (saved) {
+      search.value = saved.q || "";
+      selects.forEach(function (el, i) {
+        var value = saved.s ? saved.s[i] : undefined;
+        if (el && Array.prototype.some.call(el.options, function (o) { return o.value === value; })) { el.value = value; }
+      });
+    }
+    var sort = localStorage.getItem(SORT);
+    if (sort && SORTS[sort]) { sortSelect.value = sort; }
+  } catch (e) { /* storage unavailable: defaults */ }
+
+  search.addEventListener("input", applyFilters);
+  selects.forEach(function (el) { if (el) { el.addEventListener("change", applyFilters); } });
+  sortSelect.addEventListener("change", applySort);
+  document.addEventListener("cev-language", applyFilters);  // the counter follows the language
+  document.addEventListener("cev-topics", applyFilters);  // a topic changed
+  if (sortSelect.value !== "date-desc") { applySort(); }
+  applyFilters();
+})();
+</script>
+<script defer src="nav.js"></script>
+<script defer src="admin.js"></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Archive box with two speech bubbles: an original icon for this tool -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b6ea5"/>
+      <stop offset="1" stop-color="#2a5283"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="116" height="116" rx="24" fill="url(#bg)"/>
+  <!-- speech bubbles -->
+  <path d="M28 26h46a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H48l-12 10v-10h-8a8 8 0 0 1-8-8V34a8 8 0 0 1 8-8z" fill="#ffffff"/>
+  <path d="M60 46h40a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8h-6v9l-11-9H60a8 8 0 0 1-8-8V54a8 8 0 0 1 8-8z" fill="#f7c873"/>
+  <rect x="32" y="37" width="34" height="5" rx="2.5" fill="#3b6ea5"/>
+  <rect x="32" y="47" width="24" height="5" rx="2.5" fill="#3b6ea5"/>
+  <!-- archive box -->
+  <rect x="24" y="86" width="80" height="12" rx="4" fill="#dfe8f3"/>
+  <path d="M28 98h72v14a4 4 0 0 1-4 4H32a4 4 0 0 1-4-4z" fill="#c4d4e8"/>
+  <rect x="54" y="103" width="20" height="5" rx="2.5" fill="#2a5283"/>
+</svg>

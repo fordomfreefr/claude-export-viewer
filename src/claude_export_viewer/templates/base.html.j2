@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="{{ lang() }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title{% block title_attrs %} data-i18n="web.site_title"{% endblock %}>{% block title %}{{ t("web.site_title") }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% block root %}{% endblock %}style.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+{#- Texts of every language, then the script putting the chosen one in place (before the other scripts) #}
+<script src="{{ self.root() }}i18n-data.js"></script>
+<script src="{{ self.root() }}i18n.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

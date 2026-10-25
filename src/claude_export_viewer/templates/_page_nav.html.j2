@@ -1,0 +1,6 @@
+{# Buttons "top", "middle", "bottom" of the page (script: nav.js) #}
+<nav class="page-nav" id="page-nav" {{ attr("aria-label", "web.nav.label") }} hidden>
+  <button type="button" data-go="top" {{ attr("title", "web.nav.top") }}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  <button type="button" data-go="middle" {{ attr("title", "web.nav.middle") }}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 9h14M5 15h14"/></svg></button>
+  <button type="button" data-go="bottom" {{ attr("title", "web.nav.bottom") }}><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+</nav>

@@ -1,0 +1,64 @@
+{% extends "base.html.j2" %}
+
+{% block title_attrs %}{% if not conversation.name %} data-i18n="web.untitled"{% endif %}{% endblock %}
+{% block title %}{{ conversation.name or t("web.untitled") }}{% endblock %}
+{% block root %}../{% endblock %}
+{% block head_extra %}{% if has_math %}<link rel="stylesheet" href="katex/katex.min.css">{% endif %}{% endblock %}
+
+{% block content %}
+<a href="../index.html" class="back-link">&larr; {{ T("web.back") }}</a>
+
+<div class="convo-header">
+  <h1>{% if conversation.name %}{{ conversation.name }}{% else %}{{ T("web.untitled") }}{% endif %}</h1>
+  <div class="meta">
+    {% if conversation.created_at %}{{ date(conversation.created_at, true) }} &middot; {% endif %}
+    {{- T("web.messages", n=conversation.chat_messages | length) }}
+    {%- set url = conversation.uuid | claude_url %}
+    {%- if url and not deleted_since %}
+    <span class="claude-link">&middot; <a href="{{ url }}" target="_blank" rel="noopener"
+       {{ attr("title", "web.open_claude_title") }}>{{ T("web.open_claude") }}&nbsp;&#8599;</a></span>
+    {%- endif %}
+  </div>
+  {% if markdown_json %}
+  <div class="export-bar" id="export-bar" hidden
+       {% if office_key %}data-key="{{ office_key }}" data-cmd-odt="{{ office_commands.odt }}" data-cmd-docx="{{ office_commands.docx }}"{% endif %}>
+    <span class="export-label">{{ T("web.export") }}</span>
+    <button type="button" id="export-md" class="export-btn" {{ attr("title", "web.export_md_title") }}>.md</button>
+    {% if office_key %}
+    <button type="button" class="export-btn" data-format="odt" {{ attr("title", "web.export_odt_title") }}>.odt</button>
+    <button type="button" class="export-btn" data-format="docx" {{ attr("title", "web.export_docx_title") }}>.docx</button>
+    {% endif %}
+    <button type="button" id="export-pdf" class="export-btn" {{ attr("title", "web.export_pdf_title") }}>.pdf</button>
+    <label class="export-option" {{ attr("title", "web.include_versions_title") }}>
+      <input type="checkbox" id="export-versions" checked> {{ T("web.include_versions") }}
+    </label>
+  </div>
+  <div class="export-help" id="export-help" hidden></div>
+  {% endif %}
+</div>
+{% if deleted_since %}
+<div class="deleted-banner">
+  <strong>{{ T("web.deleted_on_claude") }}</strong> — {{ T("web.deleted_banner", date=deleted_since) }}
+  {% if version_export %}{{ T("web.kept_copy_version", date=version_export) }}{% else %}{{ T("web.kept_copy") }}{% endif %}
+</div>
+{% endif %}
+
+<div class="messages">
+  {% for message_html in rendered_messages %}
+  {{ message_html | safe }}
+  {% endfor %}
+</div>
+{% include "_page_nav.html.j2" %}
+{% endblock %}
+
+{% block scripts %}<script defer src="../nav.js"></script>
+{% if markdown_json %}
+<script type="application/json" id="cev-markdown">{{ markdown_json | safe }}</script>
+<script defer src="../export.js"></script>
+{% endif %}{% if has_code %}
+<script defer src="../code.js"></script>
+{% endif %}{% if has_math %}
+<script defer src="katex/katex.min.js"></script>
+<script defer src="katex/copy-tex.min.js"></script>
+<script defer src="katex/render.js"></script>
+{% endif %}{% endblock %}
