@@ -9,7 +9,10 @@
 <a href="../index.html" class="back-link">&larr; {{ T("web.back") }}</a>
 
 <div class="convo-header">
-  <h1>{% if conversation.name %}{{ conversation.name }}{% else %}{{ T("web.untitled") }}{% endif %}</h1>
+  <div class="convo-title">
+    <h1>{% if conversation.name %}{{ conversation.name }}{% else %}{{ T("web.untitled") }}{% endif %}</h1>
+    <button type="button" class="fold-all" id="fold-all" aria-pressed="false" {{ attr("title", "web.fold.all_hide") }} hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="fold-in" d="M12 3v6M9 6l3 3 3-3M12 21v-6M9 18l3-3 3 3M4 12h16"/><path class="fold-out" d="M12 9V3M9 6l3-3 3 3M12 15v6M9 18l3 3 3-3M4 12h16"/></svg></button>
+  </div>
   <div class="meta">
     {% if conversation.created_at %}{{ date(conversation.created_at, true) }} &middot; {% endif %}
     {{- T("web.messages", n=conversation.chat_messages | length) }}
@@ -52,6 +55,10 @@
 {% endblock %}
 
 {% block scripts %}<script defer src="../nav.js"></script>
+<script defer src="../fold.js"></script>
+<script defer src="../query.js"></script>
+<script defer src="../msg.js"></script>
+<script defer src="../files.js"></script>
 {% if markdown_json %}
 <script type="application/json" id="cev-markdown">{{ markdown_json | safe }}</script>
 <script defer src="../export.js"></script>

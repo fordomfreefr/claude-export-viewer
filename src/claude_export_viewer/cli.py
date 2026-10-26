@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import fetch, i18n, office_export, settings, system
+from . import fetch, i18n, office_export, settings, system, userfiles
 from .archive import Archive, ArchiveError
 from .html_builder import build_site_from_archive
 from .i18n import t
@@ -247,6 +247,20 @@ def _print_import_stats(stats, start: float) -> None:
         print("\n" + t("cli.import.suspicious", n=len(stats.newly_deleted)) + "\n")
 
 
+def _find_user_files(archive: Archive, site: Path) -> None:
+    """Copy into the site the user's own files of the conversations still missing (see userfiles)."""
+    def say(names: int, wanted: int, folders: list[Path]) -> None:
+        print(t("cli.files.search", n=names, folders=" ; ".join(str(f) for f in folders) or "-"), flush=True)
+
+    try:
+        n = userfiles.update(archive, site, settings.file_folders(site), skip=[_program_path().parent], say=say)
+    except OSError as exc:
+        print("  " + t("cli.error", message=exc))
+        return
+    if n:
+        print("  " + t("cli.files.found", n=n))
+
+
 def main(argv: list[str] | None = None) -> None:
     argv = list(sys.argv[1:] if argv is None else argv)
     system.safe_console()
@@ -395,6 +409,7 @@ def main(argv: list[str] | None = None) -> None:
         if n % 50 == 0:
             print("  " + t("cli.render.progress", n=n, seconds=f"{time.monotonic() - render_start:.0f}"), flush=True)
 
+    _find_user_files(archive, args.output)
     print(t("cli.render.start", folder=args.output))
     render = build_site_from_archive(archive, args.output, force=args.rebuild, progress=progress)
     summary = t("cli.render.done", seconds=f"{time.monotonic() - start:.0f}",

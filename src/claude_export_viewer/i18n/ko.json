@@ -19,6 +19,12 @@
  "cli.export.no_archive": "오류: 이 폴더에 보관함이 없습니다. -o로 사이트 폴더를 지정하세요.",
  "cli.export.no_match": "오류: “{query}”와(과) 일치하는 대화가 없습니다.",
  "cli.export.several": "“{query}”와(과) 일치하는 대화가 여러 개입니다. 제목을 더 자세히 쓰거나 식별자를 지정하세요:",
+ "cli.files.found": {
+  "other": "파일 {n}개를 찾아 사이트에 복사했습니다."
+ },
+ "cli.files.search": {
+  "other": "없는 파일 {n}개를 찾는 중: {folders}"
+ },
  "cli.help.all": "안내형 다운로드: 내보내기의 파일 7개를 모두 가져오기(기본값: 대화, 프로젝트, 계정)",
  "cli.help.browser": "링크에 사용할 브라우저(예: brave-browser). 기본값은 시스템 브라우저",
  "cli.help.command_metavar": "명령",
@@ -210,6 +216,20 @@
  "web.artifact.document": "문서",
  "web.artifact.mermaid": "Mermaid 다이어그램",
  "web.artifact.react": "React 컴포넌트",
+ "web.attachment.long": {
+  "other": "긴 문서: {n}자."
+ },
+ "web.attachment.open": "연결된 프로그램으로 열기",
+ "web.attachment.open_failed": "열 수 없습니다. 파일을 브라우저에 표시합니다",
+ "web.attachment.opened": "연결된 프로그램으로 열었습니다",
+ "web.attachment.path": "전체 텍스트가 여기에 저장되어 있으며, 원하는 프로그램으로 열 수 있습니다:",
+ "web.attachment.text_only": "내보내기에는 이 문서의 텍스트만 들어 있습니다(원본 파일은 없음).",
+ "web.attachment.view": {
+  "other": "내용 보기({n}자)"
+ },
+ "web.attachment.view_long": {
+  "other": "내용 보기({n}자, 긴 문서)"
+ },
  "web.back": "모든 대화",
  "web.badge.removed": {
   "other": "삭제된 부분 {n}개"
@@ -226,7 +246,15 @@
  "web.copied": "복사됨 ✓",
  "web.copy": "복사",
  "web.copy_failed": "실패",
+ "web.copy_msg": "메시지 복사(Markdown, 수식은 LaTeX)",
  "web.copy_title": "코드를 클립보드에 복사",
+ "web.csearch.hint": "alpha: 본문 · \\alpha: 수식 · α: 둘 다(∞, ≤, ∫… 도 가능)",
+ "web.csearch.hits": {
+  "other": "{n}곳 찾음"
+ },
+ "web.csearch.loading": "대화 텍스트를 불러오는 중…",
+ "web.csearch.placeholder": "내용에서 검색(3글자 이상)",
+ "web.csearch.unavailable": "검색할 수 없음: 사이트를 다시 업데이트하세요",
  "web.deleted_badge_title": "{date} 내보내기에 없음",
  "web.deleted_banner": "{date} 내보내기에 없음.",
  "web.deleted_on_claude": "claude.ai에서 삭제됨",
@@ -245,9 +273,18 @@
  "web.export_odt_title": "LibreOffice Writer용(수식 편집 가능)",
  "web.export_pdf_title": "브라우저의 인쇄 창으로 PDF 저장(“PDF로 저장” 선택)",
  "web.file": "파일",
+ "web.files.hint": "한 줄에 폴더 하나; 하위 폴더도 포함됩니다(숨김 폴더 제외). 비워 두면 다운로드 폴더로 돌아갑니다.",
+ "web.files.label": "파일을 찾을 폴더:",
+ "web.files.search": "지금 찾기",
+ "web.files.search_title": "이 폴더들에서 대화의 아직 없는 이미지와 파일을 찾아 사이트에 복사합니다",
+ "web.files.searching": "없는 파일을 찾는 중…",
  "web.filter.alive": "claude.ai에 있는 대화",
  "web.filter.all": "모든 대화",
  "web.filter.deleted": "claude.ai에서 삭제된 대화",
+ "web.fold.all_hide": "Claude의 답변 모두 숨기기(내 메시지만 보기)",
+ "web.fold.all_show": "Claude의 답변 모두 보기",
+ "web.fold.answer_hide": "Claude의 답변 숨기기",
+ "web.fold.answer_show": "Claude의 답변 보기",
  "web.formula_error": "수식을 표시하지 못했습니다: {error}",
  "web.formulas_not_converted": {
   "other": "수식 {n}개를 변환하지 못해 파일에 LaTeX로 남아 있습니다."
@@ -264,6 +301,10 @@
  "web.frame.removed_seen": {
   "other": "claude.ai에서 삭제된 부분 — 메시지 {n}개({date} 내보내기에 있음)"
  },
+ "web.hits.close": "강조 표시 지우기",
+ "web.hits.next": "다음 위치",
+ "web.hits.none": "이 페이지에 없음",
+ "web.hits.prev": "이전 위치",
  "web.image_link": "이미지: {label}",
  "web.image_not_included": "이미지(내보내기에 포함되지 않음)",
  "web.import": "새 매니페스트 가져오기",
@@ -286,14 +327,28 @@
  "web.injected_from": "claude.ai가 자동으로 추가한 지침({source})",
  "web.kept_copy": "사본이 로컬 보관함에 유지되어 있습니다.",
  "web.kept_copy_version": "사본이 로컬 보관함에 유지되어 있습니다({date} 내보내기의 버전).",
+ "web.keys.fold": "Claude의 답변 모두 숨기기 / 보기",
+ "web.keys.help": "이 목록 보기 / 닫기",
+ "web.keys.next": "내 다음 메시지",
+ "web.keys.next_pad": "내 다음 메시지 (숫자 키패드 꺼짐)",
+ "web.keys.page": "페이지 맨 위, 가운데, 맨 아래(숫자 키패드 꺼짐)",
+ "web.keys.prev": "내 이전 메시지",
+ "web.keys.prev_pad": "내 이전 메시지 (숫자 키패드 꺼짐)",
+ "web.keys.speed": "연속 스크롤 속도",
+ "web.keys.title": "키보드 단축키",
  "web.language": "언어",
  "web.messages": {
   "other": "메시지 {n}개"
  },
- "web.nav.bottom": "페이지 맨 아래",
+ "web.nav.back": "내 이전 메시지 '4'",
+ "web.nav.bottom": "페이지 맨 아래 '1'",
  "web.nav.label": "페이지 내 이동",
- "web.nav.middle": "페이지 중간",
- "web.nav.top": "페이지 맨 위",
+ "web.nav.middle": "페이지 중간 '5'",
+ "web.nav.next": "내 다음 메시지 '6'",
+ "web.nav.scroll": "느린 연속 스크롤(+ / −: 속도, Esc: 정지)",
+ "web.nav.scroll_stop": "스크롤 멈추기",
+ "web.nav.speed": "속도 {n} / {max}",
+ "web.nav.top": "페이지 맨 위 '7'",
  "web.no_name": "이름 없음",
  "web.open_claude": "claude.ai에서 열기",
  "web.open_claude_title": "이 대화를 claude.ai에서 열기(로그인 필요)",
@@ -341,5 +396,9 @@
  "web.truncated": "…(잘림)",
  "web.unknown_file": "알 수 없는 파일",
  "web.untitled": "제목 없음",
- "web.view_content": "내용 보기"
+ "web.userfile.edit": "변경",
+ "web.userfile.found": "컴퓨터에서 자동으로 찾았습니다:",
+ "web.userfile.no": "아니요",
+ "web.userfile.question": "이 파일이 맞습니까?",
+ "web.userfile.yes": "예"
 }

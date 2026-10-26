@@ -19,6 +19,12 @@
  "cli.export.no_archive": "エラー：このフォルダーにアーカイブがありません。-o でサイトのフォルダーを指定してください。",
  "cli.export.no_match": "エラー：「{query}」に一致する会話はありません。",
  "cli.export.several": "「{query}」に一致する会話が複数あります。タイトルをより詳しく指定するか、識別子を指定してください：",
+ "cli.files.found": {
+  "other": "{n} 個のファイルが見つかり、サイトにコピーしました。"
+ },
+ "cli.files.search": {
+  "other": "見つかっていない {n} 個のファイルを探しています：{folders}"
+ },
  "cli.help.all": "ガイド付きダウンロード：エクスポートの 7 つのファイルをすべて取得（既定：会話、プロジェクト、アカウント）",
  "cli.help.browser": "リンクに使うブラウザー（例：brave-browser）。既定はシステムのブラウザー",
  "cli.help.command_metavar": "コマンド",
@@ -210,6 +216,20 @@
  "web.artifact.document": "ドキュメント",
  "web.artifact.mermaid": "Mermaid 図",
  "web.artifact.react": "React コンポーネント",
+ "web.attachment.long": {
+  "other": "長い文書：{n} 文字。"
+ },
+ "web.attachment.open": "関連付けられたプログラムで開く",
+ "web.attachment.open_failed": "開けませんでした。ファイルをブラウザーで表示します",
+ "web.attachment.opened": "関連付けられたプログラムで開きました",
+ "web.attachment.path": "全文はここに保存されています。お好きなプログラムで開けます：",
+ "web.attachment.text_only": "エクスポートにはこの文書のテキストだけが含まれます（元のファイルは含まれません）。",
+ "web.attachment.view": {
+  "other": "内容を表示（{n} 文字）"
+ },
+ "web.attachment.view_long": {
+  "other": "内容を表示（{n} 文字、長い文書）"
+ },
  "web.back": "すべての会話",
  "web.badge.removed": {
   "other": "削除された部分 {n} 件"
@@ -226,7 +246,15 @@
  "web.copied": "コピーしました ✓",
  "web.copy": "コピー",
  "web.copy_failed": "失敗",
+ "web.copy_msg": "メッセージをコピー（Markdown、数式は LaTeX）",
  "web.copy_title": "コードをクリップボードにコピー",
+ "web.csearch.hint": "alpha：本文 · \\alpha：数式 · α：両方（∞、≤、∫… も可）",
+ "web.csearch.hits": {
+  "other": "{n} か所見つかりました"
+ },
+ "web.csearch.loading": "会話のテキストを読み込んでいます…",
+ "web.csearch.placeholder": "内容を検索（3 文字以上）",
+ "web.csearch.unavailable": "検索できません：サイトをもう一度更新してください",
  "web.deleted_badge_title": "{date} のエクスポートにはありません",
  "web.deleted_banner": "{date} のエクスポートにはありません。",
  "web.deleted_on_claude": "claude.ai で削除済み",
@@ -245,9 +273,18 @@
  "web.export_odt_title": "LibreOffice Writer 用（数式は編集可能）",
  "web.export_pdf_title": "ブラウザーの印刷画面から PDF で保存（「PDF に保存」を選択）",
  "web.file": "ファイル",
+ "web.files.hint": "1 行に 1 フォルダー。サブフォルダーも含みます（隠しフォルダーを除く）。空欄にするとダウンロードフォルダーに戻ります。",
+ "web.files.label": "ファイルを探すフォルダー：",
+ "web.files.search": "今すぐ探す",
+ "web.files.search_title": "これらのフォルダーで会話のまだ見つかっていない画像やファイルを探し、サイトにコピーします",
+ "web.files.searching": "見つかっていないファイルを探しています…",
  "web.filter.alive": "claude.ai にあるもの",
  "web.filter.all": "すべての会話",
  "web.filter.deleted": "claude.ai で削除済み",
+ "web.fold.all_hide": "Claude の回答をすべて隠す（自分のメッセージだけを表示）",
+ "web.fold.all_show": "Claude の回答をすべて表示",
+ "web.fold.answer_hide": "Claude の回答を隠す",
+ "web.fold.answer_show": "Claude の回答を表示",
  "web.formula_error": "数式を表示できません：{error}",
  "web.formulas_not_converted": {
   "other": "{n} 個の数式を変換できず、ファイル内で LaTeX のまま残っています。"
@@ -264,6 +301,10 @@
  "web.frame.removed_seen": {
   "other": "claude.ai で削除された部分 — {n} 件のメッセージ（{date} のエクスポートにあり）"
  },
+ "web.hits.close": "強調表示を消す",
+ "web.hits.next": "次の箇所",
+ "web.hits.none": "このページにはありません",
+ "web.hits.prev": "前の箇所",
  "web.image_link": "画像：{label}",
  "web.image_not_included": "画像（エクスポートに含まれていません）",
  "web.import": "新しいマニフェストをインポート",
@@ -286,14 +327,28 @@
  "web.injected_from": "claude.ai が自動で追加した指示（{source}）",
  "web.kept_copy": "コピーはローカルのアーカイブに保持されています。",
  "web.kept_copy_version": "コピーはローカルのアーカイブに保持されています（{date} のエクスポートのバージョン）。",
+ "web.keys.fold": "Claude の回答をすべて隠す / 表示",
+ "web.keys.help": "この一覧を表示 / 閉じる",
+ "web.keys.next": "自分の次のメッセージ",
+ "web.keys.next_pad": "自分の次のメッセージ（テンキー オフ時）",
+ "web.keys.page": "ページの先頭・中央・末尾（テンキー オフ時）",
+ "web.keys.prev": "自分の前のメッセージ",
+ "web.keys.prev_pad": "自分の前のメッセージ（テンキー オフ時）",
+ "web.keys.speed": "連続スクロールの速度",
+ "web.keys.title": "キーボードショートカット",
  "web.language": "言語",
  "web.messages": {
   "other": "{n} 件のメッセージ"
  },
- "web.nav.bottom": "ページの末尾",
+ "web.nav.back": "自分の前のメッセージ '4'",
+ "web.nav.bottom": "ページの末尾 '1'",
  "web.nav.label": "ページ内の移動",
- "web.nav.middle": "ページの中ほど",
- "web.nav.top": "ページの先頭",
+ "web.nav.middle": "ページの中ほど '5'",
+ "web.nav.next": "自分の次のメッセージ '6'",
+ "web.nav.scroll": "ゆっくり連続スクロール（+ / −：速度、Esc：停止）",
+ "web.nav.scroll_stop": "スクロールを止める",
+ "web.nav.speed": "速度 {n} / {max}",
+ "web.nav.top": "ページの先頭 '7'",
  "web.no_name": "名前なし",
  "web.open_claude": "claude.ai で開く",
  "web.open_claude_title": "この会話を claude.ai で開く（ログインが必要）",
@@ -341,5 +396,9 @@
  "web.truncated": "…（省略）",
  "web.unknown_file": "不明なファイル",
  "web.untitled": "無題",
- "web.view_content": "内容を表示"
+ "web.userfile.edit": "変更",
+ "web.userfile.found": "お使いのコンピューターで自動的に見つかりました：",
+ "web.userfile.no": "いいえ",
+ "web.userfile.question": "このファイルで正しいですか？",
+ "web.userfile.yes": "はい"
 }

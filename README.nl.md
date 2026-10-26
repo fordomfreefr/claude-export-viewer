@@ -1,4 +1,4 @@
-# Claude Export Viewer (versie 2026.10.25.1)
+# Claude Export Viewer (versie 2026.10.26.15)
 
 [English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | **Nederlands** | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ Dit project is gebaseerd op [claude-export-viewer](https://github.com/lordjabez/
 - **Algemeen overzicht** van al uw gesprekken, met:
   - zoeken in de titels, met een teller van de resultaten;
   - sorteren van de gesprekken: op aanmaakdatum, datum van de laatste uitwisseling, titel, aantal berichten;
-  - eigen **rubrieken**, gekozen in een klein menu rechts van elk gesprek, om naar wens te filteren.
+  - eigen **rubrieken**, gekozen in een klein menu rechts van elk gesprek, om naar wens te filteren;
+  - **zoeken in de inhoud** (vanaf 3 letters): alleen gesprekken die alle woorden bevatten blijven staan, met het aantal gevonden passages; een woord wordt in de tekst gezocht, een opdracht als `\alpha` in de formules, een symbool als `α` of `∞` in beide; hoofdletters en accenten genegeerd.
 - **In elk gesprek**:
   - lokale datum en tijd, een link **Openen op claude.ai** (als het daar nog bestaat);
   - opgemaakte Markdown (vet, lijsten, tabellen) en gemarkeerde code (Pygments);
@@ -46,7 +47,13 @@ Dit project is gebaseerd op [claude-export-viewer](https://github.com/lordjabez/
   - denkstappen, aanroepen van hulpmiddelen en resultaten in inklapbare blokken;
   - **meerdere versies**: als een bericht is bewerkt of een antwoord opnieuw is gegenereerd, volgt de pagina de versie die naar de laatste uitwisseling leidt; de andere versies staan in inklapbare kaders „Andere versie”, op het punt waar het gesprek zich vertakte;
   - **export naar Markdown, LibreOffice (.odt) en Word (.docx) op verzoek**: een knop „.md” in elk gesprek; het bestand bevat de hoofdlijn en, in kaders (citaten) met cursieve labels, elke andere versie op haar vertakkingspunt (of, met het vakje uitgevinkt, alleen de hoofdlijn); formules als `$…$`, code, artefacten en namen van bijlagen inbegrepen (zonder denkstappen en resultaten van hulpmiddelen); leesbaar met Typora, Obsidian, Zettlr, om te zetten met Pandoc;
-  - **PDF-export** via het afdrukvenster van de browser, formules inbegrepen.
+  - **PDF-export** via het afdrukvenster van de browser, formules inbegrepen;
+  - **gezochte woorden gemarkeerd** bij openen vanuit het overzicht, met een kleine balk om van passage naar passage te gaan;
+  - **antwoorden van Claude verbergen** om alleen uw berichten onder elkaar te zien (pijltje na de datum van elk bericht, knop rechtsboven voor alle);
+  - **een bericht kopiëren** als Markdown, formules in LaTeX, met het pictogram naast de datum;
+  - **navigatie met het toetsenbord**: ← en → (4 en 6 van het numerieke toetsenblok als het uit staat) om van het ene naar het andere bericht van u te gaan, 7, 5 en 1 van het toetsenblok voor begin, midden en einde van de pagina, M om de antwoorden te verbergen, ? voor de lijst; dezelfde knoppen rechts, met **langzaam, doorlopend scrollen** op instelbare snelheid (+ en −);
+  - **bijgevoegde documenten**: volledige tekst (niet langer afgekapt op 3000 tekens), opgeslagen als bestand en via een pictogram geopend met het programma van de computer; de door claude.ai automatisch toegevoegde instructies worden maar één keer getoond.
+- **Uw bestanden teruggevonden**: de afbeeldingen en bestanden die u stuurde, de originelen van bijgevoegde documenten en de door Claude gemaakte bestanden die u opsloeg, worden op hun exacte naam gezocht in de in het overzicht gekozen mappen (submappen inbegrepen), naar de site gekopieerd en in het gesprek getoond; knoppen Ja / Nee om te bevestigen dat het het juiste bestand is (en Wijzigen om het antwoord te herzien); nog ontbrekende bestanden worden bij elke start opnieuw gezocht.
 - **Doorlopend archief**: opeenvolgende exports worden zonder duplicaten toegevoegd, en gesprekken die sindsdien op claude.ai zijn verwijderd, blijven bewaard.
 - **12 talen** (pagina's, console, exports), te kiezen in het overzicht.
 - **Bureaubladpictogram** (Linux, Windows) dat het overzicht opent en met één klik een nieuwe export importeert.
@@ -218,6 +225,9 @@ De voortgang wordt elke 50 gesprekken getoond. Onleesbare elementen worden overg
 - **Eigen rubrieken**, met filter en beheer (hernoemen, samenvoegen, verwijderen), opgeslagen in het archief.
 - **Instelbare downloadmap** (overzicht of `--downloads`), voor een browser die elders opslaat of een USB-stick.
 - **Windows** (niet getest): downloadmap uit het register gelezen, teksten in UTF-8, `py`-opdrachten met Windows-aanhalingstekens, snelkoppelingen in het menu Start en op het bureaublad.
+- **Zoeken in de inhoud** van de gesprekken, met gemarkeerde woorden en springen van resultaat naar resultaat; woorden, LaTeX-opdrachten en symbolen.
+- **Volledige bijgevoegde documenten** (geen grens van 3000 tekens meer), geopend met het programma van de computer; **uw bestanden teruggevonden** op de computer en getoond in de gesprekken.
+- **Lezen**: inklapbare antwoorden van Claude, een bericht kopiëren, navigatie met toetsenbord en numeriek toetsenblok, langzaam doorlopend scrollen.
 
 ## Optionele afhankelijkheden
 

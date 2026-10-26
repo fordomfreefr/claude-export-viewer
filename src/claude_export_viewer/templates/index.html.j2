@@ -29,6 +29,19 @@
       <div class="dl-error" id="dl-error" hidden></div>
     </form>
   </div>
+  <div class="admin-row admin-downloads" id="admin-files" hidden>
+    <span>{{ T("web.files.label") }}</span>
+    <code id="files-path"></code>
+    <button type="button" class="admin-btn small" id="files-change" aria-expanded="false" aria-controls="files-form">{{ T("web.downloads.change") }}</button>
+    <button type="button" class="admin-btn small" id="files-search" aria-controls="admin-panel" {{ attr("title", "web.files.search_title") }}>{{ T("web.files.search") }}</button>
+    <form class="dl-form" id="files-form" hidden>
+      <textarea id="files-input" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <button type="submit" class="admin-btn small">{{ T("web.downloads.save") }}</button>
+      <button type="button" class="admin-btn small" id="files-cancel">{{ T("web.downloads.cancel") }}</button>
+      <div class="dl-hint">{{ T("web.files.hint") }}</div>
+      <div class="dl-error" id="files-error" hidden></div>
+    </form>
+  </div>
   <div class="topics-manager" id="topics-manager" hidden>
     <div class="topics-manager-head">
       <strong>{{ T("web.topics.manage_title") }}</strong>
@@ -45,6 +58,8 @@
 </section>
 <div class="filter-bar">
   <input type="search" class="search-box" id="search" {{ attr("placeholder", "web.search") }} autocomplete="off">
+  <input type="search" class="search-box content-search" id="content-search" {{ attr("placeholder", "web.csearch.placeholder") }} {{ attr("title", "web.csearch.hint") }} autocomplete="off">
+  <div class="content-status" id="content-status" hidden></div>
   <div class="filter-controls">
     {% if user_map | length > 1 %}
     <select id="filter-user" class="filter-select">
@@ -91,13 +106,15 @@
       data-activity="{{ convo.last_activity.isoformat() if convo.last_activity else '' }}"
       data-messages="{{ convo.n_messages }}"
       data-deleted="{{ '1' if convo.deleted_since else '' }}"
-      data-uuid="{{ convo.uuid }}">
+      data-uuid="{{ convo.uuid }}"
+      data-key="{{ convo.filename[:-5] }}">
     <a href="conversations/{{ convo.filename }}">
       <div class="conversation-name">{% if convo.name %}{{ convo.name }}{% else %}{{ T("web.untitled") }}{% endif %}
         {%- if convo.deleted_since %} <span class="deleted-badge" data-i18n="web.deleted_on_claude" {{ attr("title", "web.deleted_badge_title", date=convo.deleted_since) }}{{ args(date=convo.deleted_since) }}>{{ t("web.deleted_on_claude") }}</span>{% endif %}
         {%- if convo.other_versions %} <span class="versions-badge" data-i18n="web.badge.versions" {{ attr("title", "web.badge.versions_title") }}{{ args(n=convo.other_versions) }}>{{ t("web.badge.versions", n=convo.other_versions) }}</span>{% endif %}
         {%- if convo.removed_parts %} <span class="versions-badge" data-i18n="web.badge.removed" {{ attr("title", "web.badge.removed_title") }}{{ args(n=convo.removed_parts) }}>{{ t("web.badge.removed", n=convo.removed_parts) }}</span>{% endif %}
       </div>
+      <div class="content-hits" hidden></div>
       <div class="conversation-meta">
         {%- if convo.created_at %}{{ date(convo.created_at) }}{% endif %}
         {%- if convo.active_later %} &middot; {{ T("web.index.last_exchange", date=LocalDate(convo.last_activity)) }}{% endif %}
@@ -121,6 +138,8 @@
 {% block scripts %}
 <script src="topics-data.js"></script>
 <script src="topics.js"></script>
+<script src="query.js"></script>
+<script src="search.js"></script>
 <script>
 (function () {
   var search = document.getElementById("search");
@@ -144,7 +163,8 @@
         && (!user || item.dataset.user === user)
         && (!project || item.dataset.project === project)
         && (!del || (del === "deleted") === (item.dataset.deleted === "1"))
-        && (!topic || (item.dataset.topic || " ") === topic);
+        && (!topic || (item.dataset.topic || " ") === topic)
+        && CEVContent.ok(item);
       item.style.display = ok ? "" : "none";
       if (ok) { shown++; }
     });
@@ -194,6 +214,7 @@
   sortSelect.addEventListener("change", applySort);
   document.addEventListener("cev-language", applyFilters);  // the counter follows the language
   document.addEventListener("cev-topics", applyFilters);  // a topic changed
+  document.addEventListener("cev-content", applyFilters);  // search in the content (search.js)
   if (sortSelect.value !== "date-desc") { applySort(); }
   applyFilters();
 })();

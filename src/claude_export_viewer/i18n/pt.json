@@ -20,6 +20,14 @@
  "cli.export.no_archive": "Erro: nenhum arquivo nesta pasta; indique a pasta do site com -o.",
  "cli.export.no_match": "Erro: nenhuma conversa corresponde a “{query}”.",
  "cli.export.several": "Várias conversas correspondem a “{query}”; especifique o título ou informe o identificador:",
+ "cli.files.found": {
+  "one": "{n} arquivo encontrado e copiado para o site.",
+  "other": "{n} arquivos encontrados e copiados para o site."
+ },
+ "cli.files.search": {
+  "one": "Procurando {n} arquivo ausente em: {folders}",
+  "other": "Procurando {n} arquivos ausentes em: {folders}"
+ },
  "cli.help.all": "Download guiado: baixar os 7 arquivos da exportação (padrão: conversas, projetos, conta)",
  "cli.help.browser": "Navegador a usar para os links (ex.: brave-browser); padrão: o navegador do sistema",
  "cli.help.command_metavar": "COMANDO",
@@ -226,6 +234,23 @@
  "web.artifact.document": "Documento",
  "web.artifact.mermaid": "Diagrama Mermaid",
  "web.artifact.react": "Componente React",
+ "web.attachment.long": {
+  "one": "Documento longo: {n} caractere.",
+  "other": "Documento longo: {n} caracteres."
+ },
+ "web.attachment.open": "Abrir com o programa associado",
+ "web.attachment.open_failed": "Não foi possível abrir: o arquivo é mostrado no navegador",
+ "web.attachment.opened": "Aberto com o programa associado",
+ "web.attachment.path": "Texto completo salvo aqui, para abrir com o programa de sua escolha:",
+ "web.attachment.text_only": "Só o texto deste documento está na exportação (o arquivo original não está incluído).",
+ "web.attachment.view": {
+  "one": "Ver o conteúdo ({n} caractere)",
+  "other": "Ver o conteúdo ({n} caracteres)"
+ },
+ "web.attachment.view_long": {
+  "one": "Ver o conteúdo ({n} caractere, documento longo)",
+  "other": "Ver o conteúdo ({n} caracteres, documento longo)"
+ },
  "web.back": "Todas as conversas",
  "web.badge.removed": {
   "one": "{n} parte excluída",
@@ -244,7 +269,16 @@
  "web.copied": "Copiado ✓",
  "web.copy": "Copiar",
  "web.copy_failed": "Falha",
+ "web.copy_msg": "Copiar a mensagem (Markdown, fórmulas em LaTeX)",
  "web.copy_title": "Copiar o código para a área de transferência",
+ "web.csearch.hint": "alpha: no texto · \\alpha: nas fórmulas · α: ambos (também ∞, ≤, ∫…)",
+ "web.csearch.hits": {
+  "one": "{n} trecho encontrado",
+  "other": "{n} trechos encontrados"
+ },
+ "web.csearch.loading": "Carregando o texto das conversas…",
+ "web.csearch.placeholder": "Pesquisar no conteúdo (3 letras no mínimo)",
+ "web.csearch.unavailable": "Pesquisa indisponível: atualize o site novamente",
  "web.deleted_badge_title": "Ausente da exportação de {date}",
  "web.deleted_banner": "ausente da exportação de {date}.",
  "web.deleted_on_claude": "Excluída no claude.ai",
@@ -263,9 +297,18 @@
  "web.export_odt_title": "Para o LibreOffice Writer (fórmulas editáveis)",
  "web.export_pdf_title": "Salvar em PDF pela janela de impressão do navegador (escolha “Salvar como PDF”)",
  "web.file": "arquivo",
+ "web.files.hint": "Uma pasta por linha; as subpastas estão incluídas (exceto as ocultas). Deixe vazio para voltar às pastas de downloads.",
+ "web.files.label": "Pastas onde procurar seus arquivos:",
+ "web.files.search": "Procurar agora",
+ "web.files.search_title": "Procura nestas pastas as imagens e arquivos das conversas ainda ausentes e os copia para o site",
+ "web.files.searching": "Procurando os arquivos ausentes…",
  "web.filter.alive": "Presentes no claude.ai",
  "web.filter.all": "Todas as conversas",
  "web.filter.deleted": "Excluídas no claude.ai",
+ "web.fold.all_hide": "Ocultar todas as respostas do Claude (ver só as suas mensagens)",
+ "web.fold.all_show": "Mostrar todas as respostas do Claude",
+ "web.fold.answer_hide": "Ocultar a resposta do Claude",
+ "web.fold.answer_show": "Mostrar a resposta do Claude",
  "web.formula_error": "Fórmula não exibida: {error}",
  "web.formulas_not_converted": {
   "one": "{n} fórmula não pôde ser convertida e fica em LaTeX no arquivo.",
@@ -287,6 +330,10 @@
   "one": "Parte excluída no claude.ai — {n} mensagem (presente na exportação de {date})",
   "other": "Parte excluída no claude.ai — {n} mensagens (presentes na exportação de {date})"
  },
+ "web.hits.close": "Remover o destaque",
+ "web.hits.next": "Próximo trecho",
+ "web.hits.none": "não encontrado nesta página",
+ "web.hits.prev": "Trecho anterior",
  "web.image_link": "Imagem: {label}",
  "web.image_not_included": "Imagem (não incluída na exportação)",
  "web.import": "Importar um novo manifesto",
@@ -312,15 +359,29 @@
  "web.injected_from": "Instruções adicionadas automaticamente pelo claude.ai ({source})",
  "web.kept_copy": "Cópia mantida no seu arquivo local.",
  "web.kept_copy_version": "Cópia mantida no seu arquivo local (versão da exportação de {date}).",
+ "web.keys.fold": "Ocultar / mostrar todas as respostas do Claude",
+ "web.keys.help": "Mostrar / fechar esta lista",
+ "web.keys.next": "Sua próxima mensagem",
+ "web.keys.next_pad": "Sua próxima mensagem (teclado numérico desativado)",
+ "web.keys.page": "Topo, meio, fim da página (teclado numérico desativado)",
+ "web.keys.prev": "Sua mensagem anterior",
+ "web.keys.prev_pad": "Sua mensagem anterior (teclado numérico desativado)",
+ "web.keys.speed": "Velocidade da rolagem contínua",
+ "web.keys.title": "Atalhos de teclado",
  "web.language": "Idioma",
  "web.messages": {
   "one": "{n} mensagem",
   "other": "{n} mensagens"
  },
- "web.nav.bottom": "Fim da página",
+ "web.nav.back": "Sua mensagem anterior '4'",
+ "web.nav.bottom": "Fim da página '1'",
  "web.nav.label": "Navegação na página",
- "web.nav.middle": "Meio da página",
- "web.nav.top": "Topo da página",
+ "web.nav.middle": "Meio da página '5'",
+ "web.nav.next": "Sua próxima mensagem '6'",
+ "web.nav.scroll": "Rolagem lenta e contínua (+ / −: velocidade, Esc: parar)",
+ "web.nav.scroll_stop": "Parar a rolagem",
+ "web.nav.speed": "Velocidade {n} / {max}",
+ "web.nav.top": "Topo da página '7'",
  "web.no_name": "Sem nome",
  "web.open_claude": "Abrir no claude.ai",
  "web.open_claude_title": "Abrir esta conversa no claude.ai (é preciso estar conectado)",
@@ -369,5 +430,9 @@
  "web.truncated": "… (truncado)",
  "web.unknown_file": "Arquivo desconhecido",
  "web.untitled": "Sem título",
- "web.view_content": "Ver o conteúdo"
+ "web.userfile.edit": "Alterar",
+ "web.userfile.found": "Encontrado automaticamente no seu computador:",
+ "web.userfile.no": "Não",
+ "web.userfile.question": "É o arquivo certo?",
+ "web.userfile.yes": "Sim"
 }

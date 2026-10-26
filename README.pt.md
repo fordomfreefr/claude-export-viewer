@@ -1,4 +1,4 @@
-# Claude Export Viewer (versão 2026.10.25.1)
+# Claude Export Viewer (versão 2026.10.26.15)
 
 [English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | **Português** | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ Este projeto é baseado no [claude-export-viewer](https://github.com/lordjabez/c
 - **Índice geral** de todas as conversas, com:
   - busca nos títulos, com contador de resultados;
   - ordenação das conversas: por data de criação, data da última troca, título, número de mensagens;
-  - **categorias** próprias, escolhidas em um pequeno menu à direita de cada conversa, para filtrar como quiser.
+  - **categorias** próprias, escolhidas em um pequeno menu à direita de cada conversa, para filtrar como quiser;
+  - a **pesquisa no conteúdo** (a partir de 3 letras): ficam só as conversas que contêm todas as palavras, com o número de trechos encontrados; uma palavra é procurada no texto, um comando como `\alpha` nas fórmulas, um símbolo como `α` ou `∞` em ambos; maiúsculas e acentos ignorados.
 - **Em cada conversa**:
   - data e hora locais, link **Abrir no claude.ai** (se ela ainda existir lá);
   - Markdown formatado (negrito, listas, tabelas) e código destacado (Pygments);
@@ -46,7 +47,13 @@ Este projeto é baseado no [claude-export-viewer](https://github.com/lordjabez/c
   - raciocínios, chamadas de ferramentas e resultados em blocos recolhíveis;
   - **várias versões**: quando uma mensagem foi editada ou uma resposta gerada novamente, a página segue a versão que leva à última troca; as outras versões ficam em quadros recolhíveis “Outra versão”, no ponto em que a conversa se ramificou;
   - **exportação para Markdown, LibreOffice (.odt) e Word (.docx) sob demanda**: um botão “.md” em cada conversa; o arquivo contém o fio principal e, em quadros (citações) com rótulos em itálico, todas as outras versões no seu ponto de ramificação (ou, com a caixa desmarcada, só o fio principal); fórmulas como `$…$`, código, artefatos e nomes dos anexos incluídos (sem raciocínios nem resultados de ferramentas); legível no Typora, Obsidian, Zettlr, conversível pelo Pandoc;
-  - **exportação para PDF** pela janela de impressão do navegador, fórmulas incluídas.
+  - **exportação para PDF** pela janela de impressão do navegador, fórmulas incluídas;
+  - **palavras pesquisadas destacadas** ao abrir pelo índice, com uma pequena barra para ir de um trecho a outro;
+  - **ocultar as respostas do Claude** para ver só as suas mensagens, uma abaixo da outra (pequena seta após a data de cada mensagem, botão no canto superior direito para todas);
+  - **copiar uma mensagem** em Markdown, fórmulas em LaTeX, pelo ícone ao lado da data;
+  - **navegação pelo teclado**: ← e → (4 e 6 do teclado numérico desativado) para passar de uma das suas mensagens a outra, 7, 5 e 1 do teclado numérico para o topo, o meio e o fim da página, M para ocultar as respostas, ? para a lista; os mesmos botões à direita, com uma **rolagem lenta e contínua** de velocidade ajustável (+ e −);
+  - **documentos anexados**: texto completo (sem o corte em 3.000 caracteres), salvo como arquivo e aberto com o programa do computador por um ícone; as instruções adicionadas automaticamente pelo claude.ai são mostradas uma só vez.
+- **Seus arquivos reencontrados**: as imagens e arquivos que você enviou, os originais dos documentos anexados e os arquivos criados pelo Claude que você salvou são procurados pelo nome exato nas pastas escolhidas no índice (subpastas incluídas), copiados para o site e mostrados na conversa; botões Sim / Não para confirmar que é o arquivo certo (e Alterar para rever a resposta); os arquivos ainda ausentes são procurados a cada inicialização.
 - **Arquivo cumulativo**: as exportações sucessivas são acrescentadas sem duplicatas, e as conversas excluídas depois no claude.ai são mantidas.
 - **12 idiomas** (páginas, console, exportações), à escolha no índice.
 - **Ícone na área de trabalho** (Linux, Windows) que abre o índice e importa uma nova exportação com um clique.
@@ -218,6 +225,9 @@ O progresso aparece a cada 50 conversas. Os itens ilegíveis são ignorados e in
 - **Categorias** próprias, com filtro e gerenciamento (renomear, juntar, excluir), salvas no arquivo.
 - **Pasta de downloads** configurável (índice ou `--downloads`), para um navegador que salva em outro lugar ou um pen drive.
 - **Windows** (não testado): pasta de downloads lida do registro, textos em UTF-8, comandos `py` com as aspas do Windows, atalhos no menu Iniciar e na área de trabalho.
+- **Pesquisa no conteúdo** das conversas, com palavras destacadas e navegação de um resultado a outro; palavras, comandos LaTeX e símbolos.
+- **Documentos anexados completos** (sem o limite de 3.000 caracteres), abertos com o programa do computador; **seus arquivos reencontrados** no computador e mostrados nas conversas.
+- **Leitura**: respostas do Claude recolhíveis, cópia de uma mensagem, navegação pelo teclado e teclado numérico, rolagem lenta e contínua.
 
 ## Dependências opcionais
 

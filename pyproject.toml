@@ -1,6 +1,6 @@
 [project]
 name = "claude-export-viewer"
-version = "2026.10.25.1"
+version = "2026.10.26.15"
 description = "Local, cumulative archive of Claude.ai data exports, browsable offline as a static HTML site"
 readme = "README.md"
 license = { text = "MIT" }

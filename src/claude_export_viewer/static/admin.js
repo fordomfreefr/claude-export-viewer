@@ -94,6 +94,7 @@
   var current = { downloads: "", system: "" };
 
   function showDownloads(data) {
+    if (data.file_folders) { showFiles(data.file_folders); }
     current = data;
     dlPath.textContent = data.downloads || data.system;
     dlSystem.hidden = Boolean(data.downloads);  // "(folder of the system)"
@@ -138,11 +139,53 @@
       .catch(function () { dlError.textContent = CEV.t("web.admin.no_server"); dlError.hidden = false; });
   });
 
+  // --- Folders where the files of the conversations are looked for (userfiles) ---
+  var filesBox = document.getElementById("admin-files");
+  var filesPath = document.getElementById("files-path");
+  var filesForm = document.getElementById("files-form");
+  var filesInput = document.getElementById("files-input");
+  var filesError = document.getElementById("files-error");
+  var filesChange = document.getElementById("files-change");
+  var fileFolders = [];
+
+  function showFiles(folders) {
+    fileFolders = folders;
+    filesPath.textContent = folders.length ? folders.join(" ; ") : "-";
+    filesBox.hidden = false;
+  }
+
+  function editingFiles(on) {
+    filesForm.hidden = !on;
+    filesChange.setAttribute("aria-expanded", on ? "true" : "false");
+    filesError.hidden = true;
+    if (on) {
+      filesInput.value = fileFolders.join("\n");
+      filesInput.focus();
+    }
+  }
+
+  filesChange.addEventListener("click", function () { editingFiles(filesForm.hidden); });
+  document.getElementById("files-cancel").addEventListener("click", function () { editingFiles(false); });
+  filesForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var lines = filesInput.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+    fetch("/__cev__/settings", {
+      method: "POST",
+      headers: { "X-CEV-Token": token, "X-CEV-Lang": CEV.lang(), "Content-Type": "application/json" },
+      body: JSON.stringify({ file_folders: lines.length ? lines : null })  // empty: the default folders
+    })
+      .then(function (r) {
+        return r.ok ? r.json().then(function (data) { showFiles(data.file_folders); editingFiles(false); })
+          : r.text().then(function (msg) { filesError.textContent = msg; filesError.hidden = false; });
+      })
+      .catch(function () { filesError.textContent = CEV.t("web.admin.no_server"); filesError.hidden = false; });
+  });
+
   // The cross, or a second click on the button, closes the log. An import still running
   // goes on (the page reloads when it ends); clicking the button meanwhile shows the log again.
   document.getElementById("admin-close").addEventListener("click", function () { showPanel(false); });
 
-  button.addEventListener("click", function () {
+  function startJob(path, first) {
     if (!token) { return; }
     if (!panel.hidden) { showPanel(false); return; }
     showPanel(true);
@@ -150,12 +193,17 @@
     running = true;
     button.classList.add("busy");
     log.innerHTML = "";
-    line(CEV.t("web.admin.searching"));
-    fetch("/__cev__/import", { method: "POST", headers: { "X-CEV-Token": token, "X-CEV-Lang": CEV.lang() } })
+    line(CEV.t(first));
+    fetch(path, { method: "POST", headers: { "X-CEV-Token": token, "X-CEV-Lang": CEV.lang() } })
       .then(function (r) {
         if (r.status === 202) { poll(0); return; }
         return r.text().then(function (msg) { line(CEV.t("web.admin.refused", { message: msg })); finished(); });
       })
       .catch(function () { line(CEV.t("web.admin.no_server")); finished(); });
+  }
+
+  button.addEventListener("click", function () { startJob("/__cev__/import", "web.admin.searching"); });
+  document.getElementById("files-search").addEventListener("click", function () {
+    startJob("/__cev__/files", "web.files.searching");
   });
 })();

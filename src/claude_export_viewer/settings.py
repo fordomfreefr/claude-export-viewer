@@ -74,3 +74,39 @@ def search_folders(site_dir: Path) -> list[Path]:
         if folder is not None and all(folder.resolve() != f.resolve() for f in out):
             out.append(folder)
     return out or [Path.home()]
+
+
+def file_folders(site_dir: Path) -> list[Path]:
+    """Where the files of the conversations are looked for (default: the downloads folders)."""
+    value = load(site_dir).get("file_folders")
+    if not isinstance(value, list):
+        return [f for f in search_folders(site_dir) if f != Path.home()] or search_folders(site_dir)
+    return [Path(v) for v in value if isinstance(v, str) and v]
+
+
+def file_folders_set(site_dir: Path) -> bool:
+    """True when the user chose the folders (False: the default is used)."""
+    return isinstance(load(site_dir).get("file_folders"), list)
+
+
+def set_file_folders(site_dir: Path, values: list[str] | None) -> list[Path]:
+    """Remember the folders (None goes back to the default). Raises ValueError(folder) for a missing one."""
+    data = load(site_dir)
+    if values is None:
+        data.pop("file_folders", None)
+        save(site_dir, data)
+        return file_folders(site_dir)
+    out: list[Path] = []
+    for value in values:
+        value = (value or "").strip()
+        if not value:
+            continue
+        folder = Path(value).expanduser()
+        if not folder.is_dir():
+            raise ValueError(value)
+        folder = folder.resolve()
+        if folder not in out:
+            out.append(folder)
+    data["file_folders"] = [str(f) for f in out]
+    save(site_dir, data)
+    return out

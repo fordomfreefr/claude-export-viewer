@@ -20,6 +20,14 @@
  "cli.export.no_archive": "Erreur : pas d'archive dans ce dossier ; indiquez le dossier du site avec -o.",
  "cli.export.no_match": "Erreur : aucune conversation ne correspond à « {query} ».",
  "cli.export.several": "Plusieurs conversations correspondent à « {query} » ; précisez le titre, ou donnez l'identifiant :",
+ "cli.files.found": {
+  "one": "{n} fichier retrouvé et copié dans le site.",
+  "other": "{n} fichiers retrouvés et copiés dans le site."
+ },
+ "cli.files.search": {
+  "one": "Recherche de {n} fichier manquant dans : {folders}",
+  "other": "Recherche de {n} fichiers manquants dans : {folders}"
+ },
  "cli.help.all": "Téléchargement guidé : récupérer les 7 fichiers de l'export (par défaut : conversations, projets, compte)",
  "cli.help.browser": "Navigateur à utiliser pour les liens (ex. brave-browser) ; par défaut, le navigateur du système",
  "cli.help.command_metavar": "COMMANDE",
@@ -226,6 +234,23 @@
  "web.artifact.document": "Document",
  "web.artifact.mermaid": "Diagramme Mermaid",
  "web.artifact.react": "Composant React",
+ "web.attachment.long": {
+  "one": "Document long : {n} caractère.",
+  "other": "Document long : {n} caractères."
+ },
+ "web.attachment.open": "Ouvrir avec le logiciel associé",
+ "web.attachment.open_failed": "Ouverture impossible : le fichier s'affiche dans le navigateur",
+ "web.attachment.opened": "Ouvert avec le logiciel associé",
+ "web.attachment.path": "Texte complet enregistré ici, à ouvrir avec le logiciel de votre choix :",
+ "web.attachment.text_only": "Seul le texte de ce document figure dans l'export (le fichier d'origine n'y est pas).",
+ "web.attachment.view": {
+  "one": "Voir le contenu ({n} caractère)",
+  "other": "Voir le contenu ({n} caractères)"
+ },
+ "web.attachment.view_long": {
+  "one": "Voir le contenu ({n} caractère, document long)",
+  "other": "Voir le contenu ({n} caractères, document long)"
+ },
  "web.back": "Toutes les conversations",
  "web.badge.removed": {
   "one": "{n} partie supprimée",
@@ -244,7 +269,16 @@
  "web.copied": "Copié ✓",
  "web.copy": "Copier",
  "web.copy_failed": "Échec",
+ "web.copy_msg": "Copier le message (Markdown, formules en LaTeX)",
  "web.copy_title": "Copier le code dans le presse-papiers",
+ "web.csearch.hint": "alpha : dans le texte · \\alpha : dans les formules · α : les deux (aussi ∞, ≤, ∫…)",
+ "web.csearch.hits": {
+  "one": "{n} passage trouvé",
+  "other": "{n} passages trouvés"
+ },
+ "web.csearch.loading": "Chargement du texte des conversations…",
+ "web.csearch.placeholder": "Rechercher dans le contenu (3 lettres minimum)",
+ "web.csearch.unavailable": "Recherche indisponible : relancez la mise à jour du site",
  "web.deleted_badge_title": "Absente de l'export du {date}",
  "web.deleted_banner": "absente de l'export du {date}.",
  "web.deleted_on_claude": "Supprimée sur claude.ai",
@@ -263,9 +297,18 @@
  "web.export_odt_title": "Pour LibreOffice Writer (formules modifiables)",
  "web.export_pdf_title": "Enregistrer en PDF par la fenêtre d'impression du navigateur (choisir « Enregistrer au format PDF »)",
  "web.file": "fichier",
+ "web.files.hint": "Un dossier par ligne ; les sous-dossiers sont inclus (sauf les dossiers cachés). Laisser vide pour revenir aux dossiers des téléchargements.",
+ "web.files.label": "Dossiers où chercher vos fichiers :",
+ "web.files.search": "Rechercher maintenant",
+ "web.files.search_title": "Cherche dans ces dossiers les images et fichiers des conversations encore manquants et les copie dans le site",
+ "web.files.searching": "Recherche des fichiers manquants…",
  "web.filter.alive": "Présentes sur claude.ai",
  "web.filter.all": "Toutes les conversations",
  "web.filter.deleted": "Supprimées sur claude.ai",
+ "web.fold.all_hide": "Masquer toutes les réponses de Claude (ne garder que vos messages)",
+ "web.fold.all_show": "Afficher toutes les réponses de Claude",
+ "web.fold.answer_hide": "Masquer la réponse de Claude",
+ "web.fold.answer_show": "Afficher la réponse de Claude",
  "web.formula_error": "Formule non rendue : {error}",
  "web.formulas_not_converted": {
   "one": "{n} formule n'a pas pu être convertie et reste en LaTeX dans le fichier.",
@@ -287,6 +330,10 @@
   "one": "Partie supprimée sur claude.ai — {n} message (présente dans l'export du {date})",
   "other": "Partie supprimée sur claude.ai — {n} messages (présente dans l'export du {date})"
  },
+ "web.hits.close": "Effacer le surlignage",
+ "web.hits.next": "Passage suivant",
+ "web.hits.none": "absent de cette page",
+ "web.hits.prev": "Passage précédent",
  "web.image_link": "Image : {label}",
  "web.image_not_included": "Image (non incluse dans l'export)",
  "web.import": "Importer un nouveau manifeste",
@@ -312,15 +359,29 @@
  "web.injected_from": "Instructions ajoutées automatiquement par claude.ai ({source})",
  "web.kept_copy": "Copie conservée dans votre archive locale.",
  "web.kept_copy_version": "Copie conservée dans votre archive locale (version de l'export du {date}).",
+ "web.keys.fold": "Masquer / afficher toutes les réponses de Claude",
+ "web.keys.help": "Afficher / fermer cette liste",
+ "web.keys.next": "Votre message suivant",
+ "web.keys.next_pad": "Votre message suivant (pavé numérique désactivé)",
+ "web.keys.page": "Haut, milieu, bas de page (pavé numérique désactivé)",
+ "web.keys.prev": "Votre message précédent",
+ "web.keys.prev_pad": "Votre message précédent (pavé numérique désactivé)",
+ "web.keys.speed": "Vitesse du défilement continu",
+ "web.keys.title": "Raccourcis clavier",
  "web.language": "Langue",
  "web.messages": {
   "one": "{n} message",
   "other": "{n} messages"
  },
- "web.nav.bottom": "Bas de page",
+ "web.nav.back": "Votre message précédent '4'",
+ "web.nav.bottom": "Bas de page '1'",
  "web.nav.label": "Navigation dans la page",
- "web.nav.middle": "Milieu de la page",
- "web.nav.top": "Haut de page",
+ "web.nav.middle": "Milieu de la page '5'",
+ "web.nav.next": "Votre message suivant '6'",
+ "web.nav.scroll": "Défilement lent et continu (+ / − : vitesse, Échap : arrêt)",
+ "web.nav.scroll_stop": "Arrêter le défilement",
+ "web.nav.speed": "Vitesse {n} / {max}",
+ "web.nav.top": "Haut de page '7'",
  "web.no_name": "Sans nom",
  "web.open_claude": "Ouvrir sur claude.ai",
  "web.open_claude_title": "Ouvrir cette conversation sur claude.ai (connexion nécessaire)",
@@ -369,5 +430,9 @@
  "web.truncated": "… (tronqué)",
  "web.unknown_file": "Fichier inconnu",
  "web.untitled": "Sans titre",
- "web.view_content": "Voir le contenu"
+ "web.userfile.edit": "Modifier",
+ "web.userfile.found": "Retrouvé automatiquement sur votre ordinateur :",
+ "web.userfile.no": "Non",
+ "web.userfile.question": "Est-ce le bon fichier ?",
+ "web.userfile.yes": "Oui"
 }

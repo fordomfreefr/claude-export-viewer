@@ -22,6 +22,18 @@
  "cli.export.no_archive": "Błąd: brak archiwum w tym folderze; wskaż folder witryny opcją -o.",
  "cli.export.no_match": "Błąd: żadna rozmowa nie pasuje do „{query}”.",
  "cli.export.several": "Kilka rozmów pasuje do „{query}”; doprecyzuj tytuł lub podaj identyfikator:",
+ "cli.files.found": {
+  "one": "Znaleziono {n} plik i skopiowano do witryny.",
+  "few": "Znaleziono {n} pliki i skopiowano do witryny.",
+  "many": "Znaleziono {n} plików i skopiowano do witryny.",
+  "other": "Znaleziono {n} pliku i skopiowano do witryny."
+ },
+ "cli.files.search": {
+  "one": "Szukanie {n} brakującego pliku w: {folders}",
+  "few": "Szukanie {n} brakujących plików w: {folders}",
+  "many": "Szukanie {n} brakujących plików w: {folders}",
+  "other": "Szukanie {n} brakującego pliku w: {folders}"
+ },
  "cli.help.all": "Prowadzone pobieranie: pobrać 7 plików eksportu (domyślnie: rozmowy, projekty, konto)",
  "cli.help.browser": "Przeglądarka używana do linków (np. brave-browser); domyślnie przeglądarka systemu",
  "cli.help.command_metavar": "POLECENIE",
@@ -258,6 +270,29 @@
  "web.artifact.document": "Dokument",
  "web.artifact.mermaid": "Diagram Mermaid",
  "web.artifact.react": "Komponent React",
+ "web.attachment.long": {
+  "one": "Długi dokument: {n} znak.",
+  "few": "Długi dokument: {n} znaki.",
+  "many": "Długi dokument: {n} znaków.",
+  "other": "Długi dokument: {n} znaku."
+ },
+ "web.attachment.open": "Otwórz w powiązanym programie",
+ "web.attachment.open_failed": "Nie można otworzyć: plik jest wyświetlany w przeglądarce",
+ "web.attachment.opened": "Otwarto w powiązanym programie",
+ "web.attachment.path": "Pełny tekst zapisano tutaj, do otwarcia w wybranym programie:",
+ "web.attachment.text_only": "W eksporcie jest tylko tekst tego dokumentu (oryginalnego pliku nie ma).",
+ "web.attachment.view": {
+  "one": "Pokaż zawartość ({n} znak)",
+  "few": "Pokaż zawartość ({n} znaki)",
+  "many": "Pokaż zawartość ({n} znaków)",
+  "other": "Pokaż zawartość ({n} znaku)"
+ },
+ "web.attachment.view_long": {
+  "one": "Pokaż zawartość ({n} znak, długi dokument)",
+  "few": "Pokaż zawartość ({n} znaki, długi dokument)",
+  "many": "Pokaż zawartość ({n} znaków, długi dokument)",
+  "other": "Pokaż zawartość ({n} znaku, długi dokument)"
+ },
  "web.back": "Wszystkie rozmowy",
  "web.badge.removed": {
   "one": "{n} usunięta część",
@@ -280,7 +315,18 @@
  "web.copied": "Skopiowano ✓",
  "web.copy": "Kopiuj",
  "web.copy_failed": "Błąd",
+ "web.copy_msg": "Kopiuj wiadomość (Markdown, wzory w LaTeX)",
  "web.copy_title": "Skopiuj kod do schowka",
+ "web.csearch.hint": "alpha: w tekście · \\alpha: we wzorach · α: oba (także ∞, ≤, ∫…)",
+ "web.csearch.hits": {
+  "one": "Znaleziono {n} fragment",
+  "few": "Znaleziono {n} fragmenty",
+  "many": "Znaleziono {n} fragmentów",
+  "other": "Znaleziono {n} fragmentu"
+ },
+ "web.csearch.loading": "Wczytywanie tekstu rozmów…",
+ "web.csearch.placeholder": "Szukaj w treści (co najmniej 3 litery)",
+ "web.csearch.unavailable": "Wyszukiwanie niedostępne: ponownie zaktualizuj witrynę",
  "web.deleted_badge_title": "Brak w eksporcie z {date}",
  "web.deleted_banner": "brak w eksporcie z {date}.",
  "web.deleted_on_claude": "Usunięta w claude.ai",
@@ -299,9 +345,18 @@
  "web.export_odt_title": "Dla LibreOffice Writer (edytowalne wzory)",
  "web.export_pdf_title": "Zapisz jako PDF przez okno drukowania przeglądarki (wybierz „Zapisz jako PDF”)",
  "web.file": "plik",
+ "web.files.hint": "Jeden folder w wierszu; podfoldery są uwzględniane (oprócz ukrytych). Pozostaw puste, aby wrócić do folderów pobierania.",
+ "web.files.label": "Foldery, w których szukać Twoich plików:",
+ "web.files.search": "Szukaj teraz",
+ "web.files.search_title": "Szuka w tych folderach brakujących jeszcze obrazów i plików z rozmów i kopiuje je do witryny",
+ "web.files.searching": "Szukanie brakujących plików…",
  "web.filter.alive": "Obecne w claude.ai",
  "web.filter.all": "Wszystkie rozmowy",
  "web.filter.deleted": "Usunięte w claude.ai",
+ "web.fold.all_hide": "Ukryj wszystkie odpowiedzi Claude'a (tylko Twoje wiadomości)",
+ "web.fold.all_show": "Pokaż wszystkie odpowiedzi Claude'a",
+ "web.fold.answer_hide": "Ukryj odpowiedź Claude'a",
+ "web.fold.answer_show": "Pokaż odpowiedź Claude'a",
  "web.formula_error": "Wzór nie został wyświetlony: {error}",
  "web.formulas_not_converted": {
   "one": "{n} wzoru nie udało się przekształcić i pozostaje w pliku w LaTeX.",
@@ -333,6 +388,10 @@
   "many": "Część usunięta w claude.ai — {n} wiadomości (obecne w eksporcie z {date})",
   "other": "Część usunięta w claude.ai — {n} wiadomości (obecne w eksporcie z {date})"
  },
+ "web.hits.close": "Usuń wyróżnienie",
+ "web.hits.next": "Następny fragment",
+ "web.hits.none": "brak na tej stronie",
+ "web.hits.prev": "Poprzedni fragment",
  "web.image_link": "Obraz: {label}",
  "web.image_not_included": "Obraz (niezawarty w eksporcie)",
  "web.import": "Importuj nowy manifest",
@@ -364,6 +423,15 @@
  "web.injected_from": "Instrukcje dodane automatycznie przez claude.ai ({source})",
  "web.kept_copy": "Kopia zachowana w lokalnym archiwum.",
  "web.kept_copy_version": "Kopia zachowana w lokalnym archiwum (wersja z eksportu z {date}).",
+ "web.keys.fold": "Ukryj / pokaż wszystkie odpowiedzi Claude'a",
+ "web.keys.help": "Pokaż / zamknij tę listę",
+ "web.keys.next": "Twoja następna wiadomość",
+ "web.keys.next_pad": "Twoja następna wiadomość (klawiatura numeryczna wyłączona)",
+ "web.keys.page": "Góra, środek, dół strony (klawiatura numeryczna wyłączona)",
+ "web.keys.prev": "Twoja poprzednia wiadomość",
+ "web.keys.prev_pad": "Twoja poprzednia wiadomość (klawiatura numeryczna wyłączona)",
+ "web.keys.speed": "Prędkość ciągłego przewijania",
+ "web.keys.title": "Skróty klawiszowe",
  "web.language": "Język",
  "web.messages": {
   "one": "{n} wiadomość",
@@ -371,10 +439,15 @@
   "many": "{n} wiadomości",
   "other": "{n} wiadomości"
  },
- "web.nav.bottom": "Koniec strony",
+ "web.nav.back": "Twoja poprzednia wiadomość '4'",
+ "web.nav.bottom": "Koniec strony '1'",
  "web.nav.label": "Nawigacja po stronie",
- "web.nav.middle": "Środek strony",
- "web.nav.top": "Początek strony",
+ "web.nav.middle": "Środek strony '5'",
+ "web.nav.next": "Twoja następna wiadomość '6'",
+ "web.nav.scroll": "Powolne, ciągłe przewijanie (+ / −: prędkość, Esc: stop)",
+ "web.nav.scroll_stop": "Zatrzymaj przewijanie",
+ "web.nav.speed": "Prędkość {n} / {max}",
+ "web.nav.top": "Początek strony '7'",
  "web.no_name": "Bez nazwy",
  "web.open_claude": "Otwórz w claude.ai",
  "web.open_claude_title": "Otwórz tę rozmowę w claude.ai (wymagane zalogowanie)",
@@ -425,5 +498,9 @@
  "web.truncated": "… (obcięte)",
  "web.unknown_file": "Nieznany plik",
  "web.untitled": "Bez tytułu",
- "web.view_content": "Pokaż treść"
+ "web.userfile.edit": "Zmień",
+ "web.userfile.found": "Znaleziono automatycznie na Twoim komputerze:",
+ "web.userfile.no": "Nie",
+ "web.userfile.question": "Czy to właściwy plik?",
+ "web.userfile.yes": "Tak"
 }

@@ -20,6 +20,14 @@
  "cli.export.no_archive": "Fout: geen archief in deze map; geef de map van de site op met -o.",
  "cli.export.no_match": "Fout: geen enkel gesprek komt overeen met ‘{query}’.",
  "cli.export.several": "Meerdere gesprekken komen overeen met ‘{query}’; geef de titel nauwkeuriger op, of geef de identificatie:",
+ "cli.files.found": {
+  "one": "{n} bestand gevonden en naar de site gekopieerd.",
+  "other": "{n} bestanden gevonden en naar de site gekopieerd."
+ },
+ "cli.files.search": {
+  "one": "Zoeken naar {n} ontbrekend bestand in: {folders}",
+  "other": "Zoeken naar {n} ontbrekende bestanden in: {folders}"
+ },
  "cli.help.all": "Begeleide download: de 7 bestanden van de export ophalen (standaard: gesprekken, projecten, account)",
  "cli.help.browser": "Browser voor de links (bijv. brave-browser); standaard: de browser van het systeem",
  "cli.help.command_metavar": "OPDRACHT",
@@ -226,6 +234,23 @@
  "web.artifact.document": "Document",
  "web.artifact.mermaid": "Mermaid-diagram",
  "web.artifact.react": "React-component",
+ "web.attachment.long": {
+  "one": "Lang document: {n} teken.",
+  "other": "Lang document: {n} tekens."
+ },
+ "web.attachment.open": "Openen met het gekoppelde programma",
+ "web.attachment.open_failed": "Openen niet gelukt: het bestand wordt in de browser getoond",
+ "web.attachment.opened": "Geopend met het gekoppelde programma",
+ "web.attachment.path": "Volledige tekst hier opgeslagen, te openen met een programma naar keuze:",
+ "web.attachment.text_only": "Alleen de tekst van dit document staat in de export (het oorspronkelijke bestand niet).",
+ "web.attachment.view": {
+  "one": "Inhoud bekijken ({n} teken)",
+  "other": "Inhoud bekijken ({n} tekens)"
+ },
+ "web.attachment.view_long": {
+  "one": "Inhoud bekijken ({n} teken, lang document)",
+  "other": "Inhoud bekijken ({n} tekens, lang document)"
+ },
  "web.back": "Alle gesprekken",
  "web.badge.removed": {
   "one": "{n} verwijderd deel",
@@ -244,7 +269,16 @@
  "web.copied": "Gekopieerd ✓",
  "web.copy": "Kopiëren",
  "web.copy_failed": "Mislukt",
+ "web.copy_msg": "Bericht kopiëren (Markdown, formules in LaTeX)",
  "web.copy_title": "De code naar het klembord kopiëren",
+ "web.csearch.hint": "alpha: in de tekst · \\alpha: in de formules · α: beide (ook ∞, ≤, ∫…)",
+ "web.csearch.hits": {
+  "one": "{n} passage gevonden",
+  "other": "{n} passages gevonden"
+ },
+ "web.csearch.loading": "Tekst van de gesprekken laden…",
+ "web.csearch.placeholder": "Zoeken in de inhoud (minstens 3 letters)",
+ "web.csearch.unavailable": "Zoeken niet beschikbaar: werk de site opnieuw bij",
  "web.deleted_badge_title": "Ontbreekt in de export van {date}",
  "web.deleted_banner": "ontbreekt in de export van {date}.",
  "web.deleted_on_claude": "Verwijderd op claude.ai",
@@ -263,9 +297,18 @@
  "web.export_odt_title": "Voor LibreOffice Writer (bewerkbare formules)",
  "web.export_pdf_title": "Opslaan als PDF via het afdrukvenster van de browser (kies ‘Opslaan als PDF’)",
  "web.file": "bestand",
+ "web.files.hint": "Eén map per regel; submappen worden meegenomen (behalve verborgen mappen). Leeg laten om terug te gaan naar de downloadmappen.",
+ "web.files.label": "Mappen waarin uw bestanden worden gezocht:",
+ "web.files.search": "Nu zoeken",
+ "web.files.search_title": "Zoekt in deze mappen de nog ontbrekende afbeeldingen en bestanden van de gesprekken en kopieert ze naar de site",
+ "web.files.searching": "Ontbrekende bestanden zoeken…",
  "web.filter.alive": "Aanwezig op claude.ai",
  "web.filter.all": "Alle gesprekken",
  "web.filter.deleted": "Verwijderd op claude.ai",
+ "web.fold.all_hide": "Alle antwoorden van Claude verbergen (alleen uw berichten tonen)",
+ "web.fold.all_show": "Alle antwoorden van Claude tonen",
+ "web.fold.answer_hide": "Antwoord van Claude verbergen",
+ "web.fold.answer_show": "Antwoord van Claude tonen",
  "web.formula_error": "Formule niet weergegeven: {error}",
  "web.formulas_not_converted": {
   "one": "{n} formule kon niet worden omgezet en blijft in LaTeX in het bestand.",
@@ -287,6 +330,10 @@
   "one": "Verwijderd deel op claude.ai — {n} bericht (aanwezig in de export van {date})",
   "other": "Verwijderd deel op claude.ai — {n} berichten (aanwezig in de export van {date})"
  },
+ "web.hits.close": "Markering verwijderen",
+ "web.hits.next": "Volgende passage",
+ "web.hits.none": "niet op deze pagina",
+ "web.hits.prev": "Vorige passage",
  "web.image_link": "Afbeelding: {label}",
  "web.image_not_included": "Afbeelding (niet opgenomen in de export)",
  "web.import": "Een nieuw manifest importeren",
@@ -312,15 +359,29 @@
  "web.injected_from": "Instructies automatisch toegevoegd door claude.ai ({source})",
  "web.kept_copy": "Kopie bewaard in uw lokale archief.",
  "web.kept_copy_version": "Kopie bewaard in uw lokale archief (versie van de export van {date}).",
+ "web.keys.fold": "Alle antwoorden van Claude verbergen / tonen",
+ "web.keys.help": "Deze lijst tonen / sluiten",
+ "web.keys.next": "Uw volgende bericht",
+ "web.keys.next_pad": "Uw volgende bericht (numeriek toetsenblok uit)",
+ "web.keys.page": "Begin, midden, einde van de pagina (numeriek toetsenblok uit)",
+ "web.keys.prev": "Uw vorige bericht",
+ "web.keys.prev_pad": "Uw vorige bericht (numeriek toetsenblok uit)",
+ "web.keys.speed": "Snelheid van het doorlopend scrollen",
+ "web.keys.title": "Sneltoetsen",
  "web.language": "Taal",
  "web.messages": {
   "one": "{n} bericht",
   "other": "{n} berichten"
  },
- "web.nav.bottom": "Onderaan de pagina",
+ "web.nav.back": "Uw vorige bericht '4'",
+ "web.nav.bottom": "Onderaan de pagina '1'",
  "web.nav.label": "Navigatie in de pagina",
- "web.nav.middle": "Midden van de pagina",
- "web.nav.top": "Bovenaan de pagina",
+ "web.nav.middle": "Midden van de pagina '5'",
+ "web.nav.next": "Uw volgende bericht '6'",
+ "web.nav.scroll": "Langzaam, doorlopend scrollen (+ / −: snelheid, Esc: stop)",
+ "web.nav.scroll_stop": "Scrollen stoppen",
+ "web.nav.speed": "Snelheid {n} / {max}",
+ "web.nav.top": "Bovenaan de pagina '7'",
  "web.no_name": "Zonder naam",
  "web.open_claude": "Openen op claude.ai",
  "web.open_claude_title": "Dit gesprek openen op claude.ai (aanmelden vereist)",
@@ -369,5 +430,9 @@
  "web.truncated": "… (ingekort)",
  "web.unknown_file": "Onbekend bestand",
  "web.untitled": "Zonder titel",
- "web.view_content": "Inhoud bekijken"
+ "web.userfile.edit": "Wijzigen",
+ "web.userfile.found": "Automatisch gevonden op uw computer:",
+ "web.userfile.no": "Nee",
+ "web.userfile.question": "Is dit het juiste bestand?",
+ "web.userfile.yes": "Ja"
 }

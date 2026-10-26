@@ -19,6 +19,12 @@
  "cli.export.no_archive": "错误：此文件夹中没有存档；请用 -o 指定网站文件夹。",
  "cli.export.no_match": "错误：没有与“{query}”匹配的对话。",
  "cli.export.several": "有多个对话与“{query}”匹配；请写得更具体，或提供标识符：",
+ "cli.files.found": {
+  "other": "已找到 {n} 个文件并复制到网站中。"
+ },
+ "cli.files.search": {
+  "other": "正在以下位置查找 {n} 个缺少的文件：{folders}"
+ },
  "cli.help.all": "引导下载：获取导出的全部 7 个文件（默认：对话、项目、账户）",
  "cli.help.browser": "用于打开链接的浏览器（例如 brave-browser）；默认使用系统浏览器",
  "cli.help.command_metavar": "命令",
@@ -210,6 +216,20 @@
  "web.artifact.document": "文档",
  "web.artifact.mermaid": "Mermaid 图表",
  "web.artifact.react": "React 组件",
+ "web.attachment.long": {
+  "other": "长文档：{n} 个字符。"
+ },
+ "web.attachment.open": "用关联的程序打开",
+ "web.attachment.open_failed": "无法打开：文件将在浏览器中显示",
+ "web.attachment.opened": "已用关联的程序打开",
+ "web.attachment.path": "完整文本保存在此处，可用你选择的程序打开：",
+ "web.attachment.text_only": "导出中只有该文档的文本（不含原始文件）。",
+ "web.attachment.view": {
+  "other": "查看内容（{n} 个字符）"
+ },
+ "web.attachment.view_long": {
+  "other": "查看内容（{n} 个字符，长文档）"
+ },
  "web.back": "所有对话",
  "web.badge.removed": {
   "other": "{n} 个已删除部分"
@@ -226,7 +246,15 @@
  "web.copied": "已复制 ✓",
  "web.copy": "复制",
  "web.copy_failed": "失败",
+ "web.copy_msg": "复制消息（Markdown，公式为 LaTeX）",
  "web.copy_title": "将代码复制到剪贴板",
+ "web.csearch.hint": "alpha：在文本中 · \\alpha：在公式中 · α：两者（也可用 ∞、≤、∫…）",
+ "web.csearch.hits": {
+  "other": "找到 {n} 处"
+ },
+ "web.csearch.loading": "正在加载对话文本…",
+ "web.csearch.placeholder": "在内容中搜索（至少 3 个字母）",
+ "web.csearch.unavailable": "搜索不可用：请重新更新网站",
  "web.deleted_badge_title": "{date} 的导出中没有它",
  "web.deleted_banner": "{date} 的导出中没有它。",
  "web.deleted_on_claude": "已在 claude.ai 上删除",
@@ -245,9 +273,18 @@
  "web.export_odt_title": "适用于 LibreOffice Writer（公式可编辑）",
  "web.export_pdf_title": "通过浏览器的打印窗口保存为 PDF（选择“另存为 PDF”）",
  "web.file": "文件",
+ "web.files.hint": "每行一个文件夹；包括子文件夹（隐藏文件夹除外）。留空则恢复为下载文件夹。",
+ "web.files.label": "查找你的文件的文件夹：",
+ "web.files.search": "立即查找",
+ "web.files.search_title": "在这些文件夹中查找对话中仍缺少的图片和文件，并复制到网站中",
+ "web.files.searching": "正在查找缺少的文件…",
  "web.filter.alive": "仍在 claude.ai 上",
  "web.filter.all": "所有对话",
  "web.filter.deleted": "已在 claude.ai 上删除",
+ "web.fold.all_hide": "隐藏 Claude 的所有回答（只显示你的消息）",
+ "web.fold.all_show": "显示 Claude 的所有回答",
+ "web.fold.answer_hide": "隐藏 Claude 的回答",
+ "web.fold.answer_show": "显示 Claude 的回答",
  "web.formula_error": "公式未显示：{error}",
  "web.formulas_not_converted": {
   "other": "有 {n} 个公式无法转换，在文件中保留为 LaTeX。"
@@ -264,6 +301,10 @@
  "web.frame.removed_seen": {
   "other": "在 claude.ai 上删除的部分 — {n} 条消息（存在于 {date} 的导出中）"
  },
+ "web.hits.close": "清除高亮",
+ "web.hits.next": "下一处",
+ "web.hits.none": "本页中未找到",
+ "web.hits.prev": "上一处",
  "web.image_link": "图片：{label}",
  "web.image_not_included": "图片（未包含在导出中）",
  "web.import": "导入新的清单",
@@ -286,14 +327,28 @@
  "web.injected_from": "claude.ai 自动添加的指令（{source}）",
  "web.kept_copy": "副本已保留在你的本地存档中。",
  "web.kept_copy_version": "副本已保留在你的本地存档中（{date} 导出中的版本）。",
+ "web.keys.fold": "隐藏 / 显示 Claude 的所有回答",
+ "web.keys.help": "显示 / 关闭此列表",
+ "web.keys.next": "你的下一条消息",
+ "web.keys.next_pad": "你的下一条消息（数字小键盘关闭时）",
+ "web.keys.page": "页面顶部、中部、底部（数字小键盘关闭时）",
+ "web.keys.prev": "你的上一条消息",
+ "web.keys.prev_pad": "你的上一条消息（数字小键盘关闭时）",
+ "web.keys.speed": "连续滚动的速度",
+ "web.keys.title": "键盘快捷键",
  "web.language": "语言",
  "web.messages": {
   "other": "{n} 条消息"
  },
- "web.nav.bottom": "页面底部",
+ "web.nav.back": "你的上一条消息 '4'",
+ "web.nav.bottom": "页面底部 '1'",
  "web.nav.label": "页面内导航",
- "web.nav.middle": "页面中部",
- "web.nav.top": "页面顶部",
+ "web.nav.middle": "页面中部 '5'",
+ "web.nav.next": "你的下一条消息 '6'",
+ "web.nav.scroll": "缓慢连续滚动（+ / −：速度，Esc：停止）",
+ "web.nav.scroll_stop": "停止滚动",
+ "web.nav.speed": "速度 {n} / {max}",
+ "web.nav.top": "页面顶部 '7'",
  "web.no_name": "无名称",
  "web.open_claude": "在 claude.ai 上打开",
  "web.open_claude_title": "在 claude.ai 上打开此对话（需要登录）",
@@ -341,5 +396,9 @@
  "web.truncated": "…（已截断）",
  "web.unknown_file": "未知文件",
  "web.untitled": "无标题",
- "web.view_content": "查看内容"
+ "web.userfile.edit": "更改",
+ "web.userfile.found": "已在你的电脑上自动找到：",
+ "web.userfile.no": "否",
+ "web.userfile.question": "是这个文件吗？",
+ "web.userfile.yes": "是"
 }

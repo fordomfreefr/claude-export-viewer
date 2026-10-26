@@ -1,4 +1,4 @@
-# Claude Export Viewer (wersja 2026.10.25.1)
+# Claude Export Viewer (wersja 2026.10.26.15)
 
 [English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | **Polski** | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ Ten projekt opiera się na [claude-export-viewer](https://github.com/lordjabez/c
 - **Ogólny spis** wszystkich rozmów, z:
   - wyszukiwaniem w tytułach, z licznikiem wyników;
   - sortowaniem rozmów: według daty utworzenia, daty ostatniej wymiany, tytułu, liczby wiadomości;
-  - własnymi **kategoriami**, wybieranymi w małym menu po prawej stronie każdej rozmowy, do dowolnego filtrowania.
+  - własnymi **kategoriami**, wybieranymi w małym menu po prawej stronie każdej rozmowy, do dowolnego filtrowania;
+  - **wyszukiwanie w treści** (od 3 liter): zostają tylko rozmowy zawierające wszystkie słowa, z liczbą znalezionych fragmentów; słowo jest szukane w tekście, polecenie takie jak `\alpha` we wzorach, symbol taki jak `α` lub `∞` w obu; wielkość liter i akcenty są pomijane.
 - **W każdej rozmowie**:
   - lokalna data i godzina, link **Otwórz w claude.ai** (jeśli rozmowa nadal tam istnieje);
   - sformatowany Markdown (pogrubienie, listy, tabele) i podświetlany kod (Pygments);
@@ -46,7 +47,13 @@ Ten projekt opiera się na [claude-export-viewer](https://github.com/lordjabez/c
   - rozumowania, wywołania narzędzi i wyniki w zwijanych blokach;
   - **wiele wersji**: gdy wiadomość została edytowana lub odpowiedź wygenerowana ponownie, strona podąża za wersją prowadzącą do ostatniej wymiany; pozostałe wersje są w zwijanych ramkach „Inna wersja”, w miejscu, w którym rozmowa się rozgałęziła;
   - **eksport do Markdown, LibreOffice (.odt) i Word (.docx) na żądanie**: przycisk „.md” w każdej rozmowie; plik zawiera główny wątek oraz, w ramkach (cytatach) z etykietami kursywą, każdą inną wersję w miejscu jej rozgałęzienia (lub, przy odznaczonym polu, tylko główny wątek); wzory jako `$…$`, kod, artefakty i nazwy załączników (bez rozumowań i wyników narzędzi); do odczytu w Typora, Obsidian, Zettlr, do konwersji przez Pandoc;
-  - **eksport do PDF** przez okno drukowania przeglądarki, łącznie ze wzorami.
+  - **eksport do PDF** przez okno drukowania przeglądarki, łącznie ze wzorami;
+  - **wyróżnione szukane słowa** po otwarciu z listy, z małym paskiem do przechodzenia między fragmentami;
+  - **ukrywanie odpowiedzi Claude'a**, aby widzieć tylko swoje wiadomości jedna pod drugą (mała strzałka po dacie każdej wiadomości, przycisk w prawym górnym rogu dla wszystkich);
+  - **kopiowanie wiadomości** w Markdownie, wzory w LaTeX, ikoną obok daty;
+  - **nawigacja klawiaturą**: ← i → (4 i 6 wyłączonej klawiatury numerycznej), aby przechodzić między swoimi wiadomościami, 7, 5 i 1 klawiatury numerycznej na górę, środek i dół strony, M do ukrycia odpowiedzi, ? dla listy; te same przyciski po prawej, z **powolnym, ciągłym przewijaniem** o regulowanej prędkości (+ i −);
+  - **załączone dokumenty**: pełny tekst (bez ucinania na 3000 znakach), zapisany jako plik i otwierany ikoną w programie komputera; instrukcje dodane automatycznie przez claude.ai są pokazywane tylko raz.
+- **Twoje pliki odnalezione**: wysłane przez Ciebie obrazy i pliki, oryginały załączonych dokumentów oraz zapisane pliki utworzone przez Claude'a są szukane po dokładnej nazwie w folderach wybranych na liście (z podfolderami), kopiowane do witryny i pokazywane w rozmowie; przyciski Tak / Nie, aby potwierdzić, że to właściwy plik (oraz Zmień, aby zmienić odpowiedź); brakujące jeszcze pliki są szukane przy każdym uruchomieniu.
 - **Narastające archiwum**: kolejne eksporty są dodawane bez duplikatów, a rozmowy usunięte później z claude.ai zostają zachowane.
 - **12 języków** (strony, konsola, eksporty), do wyboru w spisie.
 - **Ikona na pulpicie** (Linux, Windows), która otwiera spis i jednym kliknięciem importuje nowy eksport.
@@ -218,6 +225,9 @@ Postęp jest wyświetlany co 50 rozmów. Nieczytelne elementy są pomijane i zg�
 - **Własne kategorie**, z filtrem i zarządzaniem (zmiana nazwy, łączenie, usuwanie), zapisywane w archiwum.
 - **Konfigurowalny folder pobranych plików** (spis lub `--downloads`), dla przeglądarki zapisującej gdzie indziej lub pendrive’a.
 - **Windows** (nieprzetestowane): folder pobranych plików odczytywany z rejestru, teksty w UTF-8, polecenia `py` z cudzysłowami Windows, skróty w menu Start i na pulpicie.
+- **Wyszukiwanie w treści** rozmów, z wyróżnionymi słowami i przechodzeniem między wynikami; słowa, polecenia LaTeX i symbole.
+- **Pełne załączone dokumenty** (bez limitu 3000 znaków), otwierane w programie komputera; **Twoje pliki odnalezione** na komputerze i pokazywane w rozmowach.
+- **Czytanie**: zwijane odpowiedzi Claude'a, kopiowanie wiadomości, nawigacja klawiaturą i klawiaturą numeryczną, powolne ciągłe przewijanie.
 
 ## Zależności opcjonalne
 

@@ -1,4 +1,4 @@
-# Claude Export Viewer (Version 2026.10.25.1)
+# Claude Export Viewer (Version 2026.10.26.15)
 
 [English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | **Deutsch** | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ Dieses Projekt basiert auf [claude-export-viewer](https://github.com/lordjabez/c
 - **Gesamtübersicht** aller Unterhaltungen mit:
   - Suche in den Titeln, mit Trefferzähler;
   - Sortierung der Unterhaltungen: nach Erstellungsdatum, Datum des letzten Austauschs, Titel, Anzahl der Nachrichten;
-  - eigenen **Rubriken**, gewählt in einem kleinen Menü rechts neben jeder Unterhaltung, zum gezielten Filtern.
+  - eigenen **Rubriken**, gewählt in einem kleinen Menü rechts neben jeder Unterhaltung, zum gezielten Filtern;
+  - die **Suche im Inhalt** (ab 3 Buchstaben): nur Unterhaltungen, die alle Wörter enthalten, bleiben stehen, mit der Zahl der Fundstellen; ein Wort wird im Text gesucht, ein Befehl wie `\alpha` in den Formeln, ein Symbol wie `α` oder `∞` in beidem; Groß-/Kleinschreibung und Akzente werden ignoriert.
 - **In jeder Unterhaltung**:
   - lokales Datum und Uhrzeit, Link **Auf claude.ai öffnen** (falls sie dort noch existiert);
   - formatiertes Markdown (fett, Listen, Tabellen) und hervorgehobener Code (Pygments);
@@ -46,7 +47,13 @@ Dieses Projekt basiert auf [claude-export-viewer](https://github.com/lordjabez/c
   - Denkprozesse, Werkzeugaufrufe und Ergebnisse in einklappbaren Blöcken;
   - **mehrere Versionen**: Wurde eine Nachricht bearbeitet oder eine Antwort neu erzeugt, folgt die Seite der Version, die zum letzten Austausch führt; die anderen Versionen stehen in einklappbaren Rahmen „Andere Version“, an der Stelle, an der sich die Unterhaltung verzweigt hat;
   - **Export nach Markdown, LibreOffice (.odt) und Word (.docx) auf Wunsch**: eine Schaltfläche „.md“ in jeder Unterhaltung; die Datei enthält den Hauptverlauf und, in Rahmen (Zitaten) mit kursiven Beschriftungen, jede andere Version an ihrem Verzweigungspunkt (oder, bei abgewähltem Kästchen, nur den Hauptverlauf); Formeln als `$…$`, Code, Artefakte und Namen der Anhänge inklusive (ohne Denkprozesse und Werkzeugergebnisse); lesbar mit Typora, Obsidian, Zettlr, umwandelbar mit Pandoc;
-  - **PDF-Export** über das Druckfenster des Browsers, Formeln inklusive.
+  - **PDF-Export** über das Druckfenster des Browsers, Formeln inklusive;
+  - **gesuchte Wörter hervorgehoben**, wenn die Seite aus der Übersicht geöffnet wird, mit einer kleinen Leiste, um von Fundstelle zu Fundstelle zu springen;
+  - **Antworten von Claude ausblenden**, um nur Ihre Nachrichten untereinander zu sehen (kleiner Pfeil nach dem Datum jeder Nachricht, Schaltfläche oben rechts für alle);
+  - **eine Nachricht kopieren** als Markdown, Formeln in LaTeX, über das Symbol neben dem Datum;
+  - **Tastaturnavigation**: ← und → (4 und 6 des Ziffernblocks, wenn er aus ist), um von einer Ihrer Nachrichten zur nächsten zu gehen, 7, 5 und 1 des Ziffernblocks für Anfang, Mitte und Ende der Seite, M zum Ausblenden der Antworten, ? für die Liste; dieselben Schaltflächen rechts, mit **langsamem, fortlaufendem Scrollen** in einstellbarem Tempo (+ und −);
+  - **angehängte Dokumente**: vollständiger Text (keine Kürzung mehr auf 3000 Zeichen), als Datei gespeichert und über ein Symbol mit dem Programm des Computers geöffnet; die von claude.ai automatisch hinzugefügten Anweisungen werden nur einmal angezeigt.
+- **Ihre Dateien wiedergefunden**: die Bilder und Dateien, die Sie gesendet haben, die Originale der angehängten Dokumente und die von Claude erstellten Dateien, die Sie gespeichert haben, werden unter ihrem genauen Namen in den in der Übersicht gewählten Ordnern gesucht (mit Unterordnern), in die Website kopiert und in der Unterhaltung angezeigt; Schaltflächen Ja / Nein, um zu bestätigen, dass es die richtige Datei ist (und Ändern, um die Antwort zu korrigieren); noch fehlende Dateien werden bei jedem Start erneut gesucht.
 - **Fortlaufendes Archiv**: aufeinanderfolgende Exporte werden ohne Duplikate ergänzt, und inzwischen auf claude.ai gelöschte Unterhaltungen bleiben erhalten.
 - **12 Sprachen** (Seiten, Konsole, Exporte), wählbar in der Übersicht.
 - **Desktop-Symbol** (Linux, Windows), das die Übersicht öffnet und mit einem Klick einen neuen Export importiert.
@@ -218,6 +225,9 @@ Der Fortschritt wird alle 50 Unterhaltungen angezeigt. Unlesbare Elemente werden
 - **Eigene Rubriken**, mit Filter und Verwaltung (umbenennen, zusammenführen, löschen), im Archiv gespeichert.
 - **Einstellbarer Download-Ordner** (Übersicht oder `--downloads`), für einen Browser, der woanders speichert, oder einen USB-Stick.
 - **Windows** (nicht getestet): Download-Ordner aus der Registry gelesen, Texte in UTF-8, `py`-Befehle mit Windows-Anführungszeichen, Verknüpfungen im Startmenü und auf dem Desktop.
+- **Suche im Inhalt** der Unterhaltungen, mit hervorgehobenen Wörtern und Sprung von Fundstelle zu Fundstelle; Wörter, LaTeX-Befehle und Symbole.
+- **Vollständige angehängte Dokumente** (keine Grenze von 3000 Zeichen mehr), mit dem Programm des Computers geöffnet; **Ihre Dateien** auf dem Computer wiedergefunden und in den Unterhaltungen angezeigt.
+- **Lesen**: einklappbare Antworten von Claude, Kopieren einer Nachricht, Navigation mit Tastatur und Ziffernblock, langsames fortlaufendes Scrollen.
 
 ## Optionale Abhängigkeiten
 

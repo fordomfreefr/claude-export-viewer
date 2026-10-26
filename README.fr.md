@@ -1,4 +1,4 @@
-# Claude Export Viewer (version 2026.10.25.1)
+# Claude Export Viewer (version 2026.10.26.15)
 
 [English](README.md) | **Français** | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ Ce projet est basé sur [claude-export-viewer](https://github.com/lordjabez/clau
 - **Sommaire général** de toutes les discussions permettant :
   - la recherche dans les titres, avec compteur de résultats ;
   - le tri des conversations : par date de création, date du dernier échange, titre, nombre de messages ;
-  - la création de **rubriques** de classement, choisies dans un petit menu à droite de chaque conversation, pour des filtrages personnalisés.
+  - la création de **rubriques** de classement, choisies dans un petit menu à droite de chaque conversation, pour des filtrages personnalisés ;
+  - la **recherche dans le contenu** (dès 3 lettres) : seules les conversations contenant tous les mots restent, avec le nombre de passages trouvés ; un mot cherche dans le texte, une commande comme `\alpha` dans les formules, un symbole comme `α` ou `∞` dans les deux ; majuscules et accents ignorés.
 - **Dans chaque conversation** :
   - date et heure locales, lien **Ouvrir sur claude.ai** (s'il existe encore) ;
   - Markdown mis en forme (gras, listes, tableaux) et code coloré (Pygments) ;
@@ -46,7 +47,13 @@ Ce projet est basé sur [claude-export-viewer](https://github.com/lordjabez/clau
   - réflexions, appels d'outils et résultats dans des bandeaux repliables ;
   - **versions multiples** : quand un message a été modifié ou une réponse relancée, la page suit la version qui mène au dernier échange ; les autres versions sont dans des cadres repliables « Autre version », à l'endroit où la conversation a bifurqué ;
   - **export en Markdown, LibreOffice (.odt) et Word (.docx) à la demande** : bouton « .md » sur chaque conversation ; le fichier contient le fil principal et, dans des cadres (citations) aux libellés en italique, toutes les autres versions à leur point de bifurcation (ou, case décochée, le fil principal seul) ; formules en `$…$`, code, artefacts et noms des pièces jointes inclus (sans les réflexions ni les résultats d'outils) ; lisible par Typora, Obsidian, Zettlr, convertible par Pandoc ;
-  - **export PDF** par la fenêtre d'impression du navigateur, formules comprises.
+  - **export PDF** par la fenêtre d'impression du navigateur, formules comprises ;
+  - **mots recherchés surlignés** à l'ouverture depuis le sommaire, avec une petite barre pour aller d'un passage à l'autre ;
+  - **masquer les réponses de Claude** pour ne garder que vos messages, les uns sous les autres (petite flèche après la date de chaque message, bouton en haut à droite pour toutes) ;
+  - **copier un message** en Markdown, formules en LaTeX, par l'icône à côté de la date ;
+  - **navigation au clavier** : ← et → (4 et 6 du pavé numérique désactivé) pour passer d'un de vos messages à l'autre, 7, 5 et 1 du pavé pour le haut, le milieu et le bas de la page, M pour masquer les réponses, ? pour la liste ; les mêmes boutons à droite, avec un **défilement lent et continu** à vitesse réglable (+ et −) ;
+  - **documents joints** : texte complet (plus de coupure à 3 000 caractères), enregistré comme fichier et ouvert avec le logiciel de l'ordinateur par une icône ; les instructions ajoutées automatiquement par claude.ai ne sont affichées qu'une fois.
+- **Vos fichiers retrouvés** : les images et fichiers que vous avez envoyés, les originaux des documents joints et les fichiers créés par Claude que vous avez enregistrés sont cherchés par leur nom exact dans les dossiers choisis sur le sommaire (sous-dossiers compris), copiés dans le site et affichés dans la conversation ; boutons Oui / Non pour confirmer qu'il s'agit du bon fichier (et Modifier pour revenir sur sa réponse) ; les fichiers encore manquants sont recherchés à chaque lancement.
 - **Archive cumulative** : les exports successifs s'ajoutent sans doublons, et les conversations supprimées depuis sur claude.ai sont conservées.
 - **12 langues** (pages, console, exports), au choix sur le sommaire.
 - **Icône de bureau** (Linux, Windows) qui ouvre le sommaire et permet d'importer un nouvel export d'un clic.
@@ -218,6 +225,9 @@ La progression s'affiche toutes les 50 conversations. Les éléments illisibles 
 - **Rubriques** personnelles, avec filtre et gestion (renommer, fusionner, supprimer), enregistrées dans l'archive.
 - **Dossier des téléchargements** réglable (sommaire ou `--telechargements`), pour un navigateur qui enregistre ailleurs ou une clé USB.
 - **Windows** (non testé) : dossier Téléchargements lu dans le registre, textes en UTF-8, commandes `py` avec les guillemets de Windows, raccourcis dans le menu Démarrer et sur le bureau.
+- **Recherche dans le contenu** des conversations, avec mots surlignés et passage d'un résultat à l'autre ; mots, commandes LaTeX et symboles.
+- **Documents joints complets** (plus de limite à 3 000 caractères), ouverts avec le logiciel de l'ordinateur ; **vos fichiers retrouvés** sur l'ordinateur et affichés dans les conversations.
+- **Lecture** : réponses de Claude repliables, copie d'un message, navigation au clavier et au pavé numérique, défilement lent et continu.
 
 ## Dépendances facultatives
 

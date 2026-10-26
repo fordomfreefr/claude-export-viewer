@@ -149,7 +149,8 @@ def test_settings_endpoints(tmp_path: Path, system_dl: Path) -> None:
 
         tok = token(server)
         status, body = request(server, "GET", "/__cev__/settings", {"X-CEV-Token": tok})
-        assert status == 200 and json.loads(body) == {"downloads": "", "system": str(system_dl)}
+        assert status == 200 and json.loads(body) == {"downloads": "", "system": str(system_dl),
+                                            "file_folders": [str(system_dl)], "file_folders_set": False}
 
         status, body = post(server, json.dumps({"downloads": str(usb)}).encode(), tok)
         assert status == 200 and json.loads(body) == {"downloads": str(usb.resolve())}

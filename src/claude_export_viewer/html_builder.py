@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any
 from jinja2 import Environment, PackageLoader, select_autoescape
 from markupsafe import Markup
 
-from . import __version__, dates, i18n, system, topics, tree
+from . import __version__, attachments, dates, i18n, searchdata, system, topics, tree, userfiles
 from .i18n import html_date, html_text, t
-from .markdown_export import conversation_markdown, embed, export_filename, marker
+from .markdown_export import conversation_markdown, embed, export_filename, marker, message_body
 from .math_plugin import contains_math
 from .models import ChatMessage, Conversation, parse_message
 from .renderer import render_message
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from .archive import Archive
 
 _PACKAGE_DIR = Path(__file__).parent
-_STATIC_FILES = ("style.css", "code.js", "export.js", "admin.js", "nav.js", "i18n.js", "topics.js")
+_STATIC_FILES = ("style.css", "code.js", "export.js", "admin.js", "nav.js", "i18n.js", "topics.js", "files.js", "fold.js", "msg.js", "search.js", "query.js")
 _UUID = re.compile(r"[0-9a-fA-F-]{8,64}")
 
 
@@ -164,7 +164,7 @@ def _render_tree(
 ) -> tuple[list[str], list[ChatMessage]]:
     def render_item(item: tree.Item) -> str:
         msg = to_message(item.payload)
-        return render_message(msg) if msg is not None else ""
+        return render_message(msg, message_body(msg)) if msg is not None else ""
 
     pieces, path = tree.render(items, render_item, _branch_frame)
     main = [m for m in (to_message(it.payload) for it in path) if m is not None]
@@ -254,6 +254,9 @@ def build_site_from_archive(
     site = str(Path(output_dir).resolve())
     stats = RenderStats()
     entries: list[IndexEntry] = []
+    files = userfiles.load(Path(output_dir))
+    search = searchdata.load_cache(Path(output_dir))
+    keys: dict[str, str] = {}
 
     for uuid, meta in archive.conversations.items():
         info: dict[str, Any] = archive.display_info(meta)
@@ -267,10 +270,20 @@ def build_site_from_archive(
             for fmt in ("odt", "docx")
         }
         wanted = "|".join((meta["hash"], meta.get("removed_hash", ""), info["deleted_since"], signature, launcher,
-                           site, i18n.language()))
-        if force or meta.get("rendered") != wanted or not page.exists():
+                           site, i18n.language(), userfiles.signature(files, uuid)))
+        keys[uuid] = key
+        # the text for the search comes from the page itself: generated again if missing
+        render = (force or meta.get("rendered") != wanted or not page.exists()
+                  or search.get(uuid, {}).get("hash") != wanted)
+        if render:
             try:
-                page.write_text(_render_page(template, archive.load_raw(uuid), info, meta), encoding="utf-8")
+                attachments.begin(output_dir, key, userfiles.found_for(files, uuid))  # texts of joined documents saved as files
+                try:
+                    page_html = _render_page(template, archive.load_raw(uuid), info, meta)
+                finally:
+                    attachments.end()
+                page.write_text(page_html, encoding="utf-8")
+                search[uuid] = {"hash": wanted, "data": searchdata.from_page(page_html)}
             except Exception as exc:  # noqa: BLE001 - one unreadable conversation must not stop the site
                 stats.failed += 1
                 print("  " + t("build.failed", name=meta["filename"], error=f"{type(exc).__name__}: {exc}"))
@@ -296,6 +309,7 @@ def build_site_from_archive(
             )
         )
 
+    searchdata.save(Path(output_dir), search, keys)
     stats.total = len(entries)
     stats.deleted = sum(1 for e in entries if e.deleted_since)
     _write_index(

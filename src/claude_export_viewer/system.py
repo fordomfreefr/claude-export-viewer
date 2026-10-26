@@ -86,6 +86,16 @@ def pandoc_hint() -> str:
     return "sudo apt install pandoc"
 
 
+def open_file(path: Path) -> None:
+    """Open a file with the program the computer associates with it (like a double click)."""
+    if WINDOWS:
+        os.startfile(str(path))  # type: ignore[attr-defined]  # noqa: S606
+        return
+    command = ["open" if sys.platform == "darwin" else "xdg-open", str(path)]
+    subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+
+
 def install_hint() -> str:
     """The command that installs the libraries needed by the program."""
     if WINDOWS:

@@ -34,7 +34,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
 
-from . import __version__, fetch, i18n, office_export, settings, system, topics
+from . import __version__, attachments, fetch, i18n, office_export, settings, system, topics, userfiles
 from .archive import Archive, ArchiveError
 from .i18n import t
 
@@ -100,6 +100,13 @@ def import_job(job: Job, ctx: ServerContext) -> None:
         return
     code = run_streaming([system.console_python(), "-u", str(ctx.launcher), str(manifest.path.parent), "-o",
                           str(ctx.site_dir), "--sans-navigateur"], job)
+    job.finish(code == 0)
+
+
+def files_job(job: Job, ctx: ServerContext) -> None:
+    """Look again for the files of the conversations, then update the site (no import)."""
+    code = run_streaming([system.console_python(), "-u", str(ctx.launcher), "-o", str(ctx.site_dir),
+                          "--sans-navigateur"], job)
     job.finish(code == 0)
 
 
@@ -238,7 +245,9 @@ class SiteHandler(SimpleHTTPRequestHandler):
             folder = settings.downloads_folder(self.ctx.site_dir)
             system = fetch.user_download_dirs()
             self._json(200, {"downloads": str(folder) if folder else "",
-                             "system": str(system[0]) if system else str(Path.home())})
+                             "system": str(system[0]) if system else str(Path.home()),
+                             "file_folders": [str(f) for f in settings.file_folders(self.ctx.site_dir)],
+                             "file_folders_set": settings.file_folders_set(self.ctx.site_dir)})
             return
         m = _EXPORT.fullmatch(path)
         if m:
@@ -269,7 +278,13 @@ class SiteHandler(SimpleHTTPRequestHandler):
         if path == "/__cev__/topics":
             self._change_topics()
             return
-        jobs = {"/__cev__/import": ("import", import_job)}
+        if path == "/__cev__/open":
+            self._open_attachment()
+            return
+        if path == "/__cev__/file":
+            self._decide_file()
+            return
+        jobs = {"/__cev__/import": ("import", import_job), "/__cev__/files": ("files", files_job)}
         if path not in jobs:
             self._text(404, t("server.unknown", self._lang()))
             return
@@ -296,6 +311,55 @@ class SiteHandler(SimpleHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             self._text(400, t("server.bad_request", self._lang()))
             return None
+
+    def _open_attachment(self) -> None:
+        """POST {"path": "attachments/…"}: open a saved document with the program of the computer."""
+        if not self._authorized():
+            self._text(403, t("server.refused", self._lang()))
+            return
+        data = self._json_body()
+        if data is None:
+            return
+        target = attachments.resolve(self.ctx.site_dir, unquote(str(data.get("path", ""))))
+        if target is None:
+            self._text(404, t("server.not_in_archive", self._lang()))
+            return
+        try:
+            system.open_file(target)
+        except OSError as exc:
+            self._text(500, t("cli.error", self._lang(), message=exc))
+            return
+        self._json(200, {"opened": str(target)})
+
+    def _decide_file(self) -> None:
+        """POST {"page": key, "name": file name, "action": "ok" | "reject" | "undo"}: the file found is (not) the right one."""
+        if not self._authorized():
+            self._text(403, t("server.refused", self._lang()))
+            return
+        data = self._json_body()
+        if data is None:
+            return
+        key, name, action = data.get("page"), data.get("name"), data.get("action")
+        if not isinstance(key, str) or not isinstance(name, str) or action not in userfiles.ACTIONS:
+            self._text(400, t("server.bad_request", self._lang()))
+            return
+        with self.ctx.job_lock:
+            if self.ctx.job is not None and not self.ctx.job.done:
+                self._text(409, t("server.busy", self._lang()))
+                return
+            try:
+                archive = Archive(self.ctx.site_dir)
+                uuid = next((u for u, m in archive.conversations.items()
+                             if m["filename"].removesuffix(".html") == key), None)
+                if uuid is None or not userfiles.decide(self.ctx.site_dir, uuid, name, action):
+                    self._text(404, t("server.not_in_archive", self._lang()))
+                    return
+                from .html_builder import build_site_from_archive
+                build_site_from_archive(archive, self.ctx.site_dir)  # only that page changes
+            except (OSError, ArchiveError) as exc:
+                self._text(500, t("cli.error", self._lang(), message=exc))
+                return
+        self._json(200, {"action": action})
 
     def _change_topics(self) -> None:
         """POST a change of the topics (see topics.change); answers the new state."""
@@ -324,6 +388,9 @@ class SiteHandler(SimpleHTTPRequestHandler):
         data = self._json_body()
         if data is None:
             return
+        if "file_folders" in data:
+            self._save_file_folders(data["file_folders"])
+            return
         value = data.get("downloads", "")
         if not isinstance(value, str):
             self._text(400, t("server.bad_request", self._lang()))
@@ -337,6 +404,22 @@ class SiteHandler(SimpleHTTPRequestHandler):
             self._text(500, t("cli.error", self._lang(), message=exc))
             return
         self._json(200, {"downloads": str(folder) if folder else ""})
+
+    def _save_file_folders(self, value: Any) -> None:
+        """{"file_folders": [paths] or null (the default)}."""
+        if value is not None and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
+            self._text(400, t("server.bad_request", self._lang()))
+            return
+        try:
+            folders = settings.set_file_folders(self.ctx.site_dir, value)
+        except ValueError as exc:
+            self._text(400, t("server.bad_folder", self._lang(), folder=exc.args[0]))
+            return
+        except OSError as exc:
+            self._text(500, t("cli.error", self._lang(), message=exc))
+            return
+        self._json(200, {"file_folders": [str(f) for f in folders],
+                         "file_folders_set": settings.file_folders_set(self.ctx.site_dir)})
 
     def _export(self, key: str, fmt: str, versions: bool = True, lang: str | None = None) -> None:
         lang = lang or i18n.language()

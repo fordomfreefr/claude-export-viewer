@@ -20,6 +20,14 @@
  "cli.export.no_archive": "Error: no archive in this folder; give the site folder with -o.",
  "cli.export.no_match": "Error: no conversation matches “{query}”.",
  "cli.export.several": "Several conversations match “{query}”; give a more precise title, or the identifier:",
+ "cli.files.found": {
+  "one": "{n} file found and copied into the site.",
+  "other": "{n} files found and copied into the site."
+ },
+ "cli.files.search": {
+  "one": "Looking for {n} missing file in: {folders}",
+  "other": "Looking for {n} missing files in: {folders}"
+ },
  "cli.help.all": "Guided download: fetch the 7 files of the export (default: conversations, projects, account)",
  "cli.help.browser": "Browser to use for the links (e.g. brave-browser); default: the system's browser",
  "cli.help.command_metavar": "COMMAND",
@@ -226,6 +234,23 @@
  "web.artifact.document": "Document",
  "web.artifact.mermaid": "Mermaid diagram",
  "web.artifact.react": "React component",
+ "web.attachment.long": {
+  "one": "Long document: {n} character.",
+  "other": "Long document: {n} characters."
+ },
+ "web.attachment.open": "Open with the associated program",
+ "web.attachment.open_failed": "Could not open it: the file is shown in the browser",
+ "web.attachment.opened": "Opened with the associated program",
+ "web.attachment.path": "Full text saved here, to open with the program of your choice:",
+ "web.attachment.text_only": "Only the text of this document is in the export (the original file is not included).",
+ "web.attachment.view": {
+  "one": "View content ({n} character)",
+  "other": "View content ({n} characters)"
+ },
+ "web.attachment.view_long": {
+  "one": "View content ({n} character, long document)",
+  "other": "View content ({n} characters, long document)"
+ },
  "web.back": "All conversations",
  "web.badge.removed": {
   "one": "{n} deleted part",
@@ -244,7 +269,16 @@
  "web.copied": "Copied ✓",
  "web.copy": "Copy",
  "web.copy_failed": "Failed",
+ "web.copy_msg": "Copy the message (Markdown, formulas in LaTeX)",
  "web.copy_title": "Copy the code to the clipboard",
+ "web.csearch.hint": "alpha: in the text · \\alpha: in the formulas · α: both (also ∞, ≤, ∫…)",
+ "web.csearch.hits": {
+  "one": "{n} passage found",
+  "other": "{n} passages found"
+ },
+ "web.csearch.loading": "Loading the text of the conversations…",
+ "web.csearch.placeholder": "Search in the content (3 letters or more)",
+ "web.csearch.unavailable": "Search unavailable: update the site again",
  "web.deleted_badge_title": "Missing from the export of {date}",
  "web.deleted_banner": "missing from the export of {date}.",
  "web.deleted_on_claude": "Deleted on claude.ai",
@@ -263,9 +297,18 @@
  "web.export_odt_title": "For LibreOffice Writer (editable formulas)",
  "web.export_pdf_title": "Save as PDF through the browser's print window (choose “Save as PDF”)",
  "web.file": "file",
+ "web.files.hint": "One folder per line; sub-folders are included (except hidden ones). Leave empty to go back to the downloads folders.",
+ "web.files.label": "Folders where your files are looked for:",
+ "web.files.search": "Search now",
+ "web.files.search_title": "Looks in these folders for the images and files of the conversations still missing and copies them into the site",
+ "web.files.searching": "Looking for the missing files…",
  "web.filter.alive": "Present on claude.ai",
  "web.filter.all": "All conversations",
  "web.filter.deleted": "Deleted on claude.ai",
+ "web.fold.all_hide": "Hide all of Claude's answers (keep only your messages)",
+ "web.fold.all_show": "Show all of Claude's answers",
+ "web.fold.answer_hide": "Hide Claude's answer",
+ "web.fold.answer_show": "Show Claude's answer",
  "web.formula_error": "Formula not rendered: {error}",
  "web.formulas_not_converted": {
   "one": "{n} formula could not be converted and stays in LaTeX in the file.",
@@ -287,6 +330,10 @@
   "one": "Part deleted on claude.ai — {n} message (present in the export of {date})",
   "other": "Part deleted on claude.ai — {n} messages (present in the export of {date})"
  },
+ "web.hits.close": "Remove the highlighting",
+ "web.hits.next": "Next passage",
+ "web.hits.none": "not found on this page",
+ "web.hits.prev": "Previous passage",
  "web.image_link": "Image: {label}",
  "web.image_not_included": "Image (not included in the export)",
  "web.import": "Import a new manifest",
@@ -312,15 +359,29 @@
  "web.injected_from": "Instructions added automatically by claude.ai ({source})",
  "web.kept_copy": "Copy kept in your local archive.",
  "web.kept_copy_version": "Copy kept in your local archive (version of the export of {date}).",
+ "web.keys.fold": "Hide / show all of Claude's answers",
+ "web.keys.help": "Show / close this list",
+ "web.keys.next": "Your next message",
+ "web.keys.next_pad": "Your next message (numeric keypad off)",
+ "web.keys.page": "Top, middle, bottom of the page (numeric keypad off)",
+ "web.keys.prev": "Your previous message",
+ "web.keys.prev_pad": "Your previous message (numeric keypad off)",
+ "web.keys.speed": "Speed of the continuous scrolling",
+ "web.keys.title": "Keyboard shortcuts",
  "web.language": "Language",
  "web.messages": {
   "one": "{n} message",
   "other": "{n} messages"
  },
- "web.nav.bottom": "Bottom of the page",
+ "web.nav.back": "Your previous message '4'",
+ "web.nav.bottom": "Bottom of the page '1'",
  "web.nav.label": "Navigation in the page",
- "web.nav.middle": "Middle of the page",
- "web.nav.top": "Top of the page",
+ "web.nav.middle": "Middle of the page '5'",
+ "web.nav.next": "Your next message '6'",
+ "web.nav.scroll": "Slow continuous scrolling (+ / −: speed, Escape: stop)",
+ "web.nav.scroll_stop": "Stop the scrolling",
+ "web.nav.speed": "Speed {n} / {max}",
+ "web.nav.top": "Top of the page '7'",
  "web.no_name": "No name",
  "web.open_claude": "Open on claude.ai",
  "web.open_claude_title": "Open this conversation on claude.ai (sign-in needed)",
@@ -369,5 +430,9 @@
  "web.truncated": "… (truncated)",
  "web.unknown_file": "Unknown file",
  "web.untitled": "Untitled",
- "web.view_content": "View content"
+ "web.userfile.edit": "Change",
+ "web.userfile.found": "Found automatically on your computer:",
+ "web.userfile.no": "No",
+ "web.userfile.question": "Is it the right file?",
+ "web.userfile.yes": "Yes"
 }

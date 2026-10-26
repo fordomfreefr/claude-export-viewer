@@ -1,4 +1,4 @@
-# Claude Export Viewer (version 2026.10.25.1)
+# Claude Export Viewer (version 2026.10.26.15)
 
 **English** | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
@@ -36,7 +36,8 @@ This project is based on [claude-export-viewer](https://github.com/lordjabez/cla
 - **General index** of all your chats, with:
   - search in the titles, with a result counter;
   - sorting of the conversations: by creation date, date of the last exchange, title, number of messages;
-  - **topics** of your own, chosen in a small menu on the right of each conversation, for custom filtering.
+  - **topics** of your own, chosen in a small menu on the right of each conversation, for custom filtering;
+  - **search in the content** (from 3 letters): only the conversations containing every word remain, with the number of passages found; a word is searched in the text, a command such as `\alpha` in the formulas, a symbol such as `α` or `∞` in both; case and accents ignored.
 - **In each conversation**:
   - local date and time, an **Open on claude.ai** link (if it still exists there);
   - formatted Markdown (bold, lists, tables) and highlighted code (Pygments);
@@ -46,7 +47,13 @@ This project is based on [claude-export-viewer](https://github.com/lordjabez/cla
   - thinking, tool calls and tool results in collapsible blocks;
   - **multiple versions**: when a message was edited or an answer regenerated, the page follows the version that leads to the last exchange; the other versions are in collapsible "Other version" frames, where the conversation forked;
   - **export to Markdown, LibreOffice (.odt) and Word (.docx) on demand**: a ".md" button on each conversation; the file holds the main thread and, in frames (quotes) with labels in italics, every other version at its fork point (or, box unchecked, the main thread only); formulas as `$…$`, code, artifacts and names of attachments included (no thinking, no tool results); readable by Typora, Obsidian, Zettlr, convertible by Pandoc;
-  - **PDF export** through the browser's print window, formulas included.
+  - **PDF export** through the browser's print window, formulas included;
+  - **searched words highlighted** when opened from the index, with a small bar to go from one passage to the next;
+  - **hide Claude's answers** to keep only your messages, one under the other (small arrow after the date of each message, button at the top right for all);
+  - **copy a message** as Markdown, formulas in LaTeX, with the icon next to the date;
+  - **keyboard navigation**: ← and → (4 and 6 of the numeric keypad when it is off) to go from one of your messages to the next, 7, 5 and 1 of the keypad for the top, middle and bottom of the page, M to hide the answers, ? for the list; the same buttons on the right, with a **slow continuous scrolling** at an adjustable speed (+ and −);
+  - **attached documents**: full text (no more cut at 3,000 characters), saved as a file and opened with the computer's program by an icon; the instructions added automatically by claude.ai are shown only once.
+- **Your files found again**: the images and files you sent, the originals of the attached documents and the files created by Claude that you saved are looked for by their exact name in the folders chosen on the index (sub-folders included), copied into the site and shown in the conversation; Yes / No buttons to confirm it is the right file (and Change to revise the answer); the files still missing are looked for at each launch.
 - **Cumulative archive**: successive exports are added without duplicates, and conversations deleted from claude.ai since are kept.
 - **12 languages** (pages, console, exports), chosen on the index.
 - **Desktop icon** (Linux, Windows) that opens the index and imports a new export with one click.
@@ -218,6 +225,9 @@ Progress is shown every 50 conversations. Unreadable items are skipped and repor
 - **Topics** of your own, with a filter and management (rename, merge, delete), saved in the archive.
 - **Downloads folder** setting (index or `--downloads`), for a browser that saves elsewhere or a USB key.
 - **Windows** (not tested): Downloads folder read from the registry, text in UTF-8, `py` commands with Windows quoting, shortcuts in the Start menu and on the desktop.
+- **Search in the content** of the conversations, with highlighted words and moving from one result to the next; words, LaTeX commands and symbols.
+- **Complete attached documents** (no more 3,000-character limit), opened with the computer's program; **your files found again** on the computer and shown in the conversations.
+- **Reading**: collapsible answers from Claude, copy of a message, keyboard and numeric keypad navigation, slow continuous scrolling.
 
 ## Optional dependencies
 
