@@ -4,6 +4,8 @@
 
 Transformez l'historique des discussions du site Claude.ai en un site HTML local, consultable dans n'importe quel navigateur, sans connexion Internet, et gardez une archive cumulative de vos conversations, y compris celles supprimées depuis sur le site Claude.ai.
 
+![Aperçu](docs/apercu.png)
+
 Ce projet est basé sur [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) de Judson Neer, largement modifié et complété (voir « Licence et remerciements »).
 
 > Ce projet est indépendant et non affilié à Anthropic. Claude est une marque d'Anthropic.

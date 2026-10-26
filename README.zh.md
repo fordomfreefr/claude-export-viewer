@@ -4,6 +4,8 @@
 
 把 Claude.ai 的对话记录转换成一个本地 HTML 网站，任何浏览器都能离线打开；同时为你的对话保留一个累积存档，包括之后在 Claude.ai 上被删除的对话。
 
+![截图](docs/apercu.png)
+
 本项目基于 Judson Neer 的 [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer)，并做了大量修改和扩充（见“许可证与致谢”）。
 
 > 本项目是独立项目，与 Anthropic 没有关联。Claude 是 Anthropic 的商标。

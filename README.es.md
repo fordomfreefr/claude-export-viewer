@@ -4,6 +4,8 @@
 
 Convierta el historial de conversaciones de Claude.ai en un sitio HTML local que cualquier navegador puede abrir, sin conexión a Internet, y conserve un archivo acumulativo de sus conversaciones, incluidas las que se hayan eliminado después en Claude.ai.
 
+![Captura de pantalla](docs/apercu.png)
+
 Este proyecto se basa en [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) de Judson Neer, ampliamente modificado y completado (véase «Licencia y agradecimientos»).
 
 > Este proyecto es independiente y no está afiliado a Anthropic. Claude es una marca de Anthropic.

@@ -4,6 +4,8 @@
 
 Claude.ai의 대화 기록을 인터넷 연결 없이 어떤 브라우저에서도 열 수 있는 로컬 HTML 사이트로 바꾸고, 대화의 누적 아카이브를 보관합니다. 이후 Claude.ai에서 삭제된 대화도 남습니다.
 
+![스크린샷](docs/apercu.png)
+
 이 프로젝트는 Judson Neer의 [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer)를 바탕으로 크게 수정하고 확장한 것입니다(“라이선스와 감사의 말” 참고).
 
 > 이 프로젝트는 독립 프로젝트이며 Anthropic과 제휴 관계가 없습니다. Claude는 Anthropic의 상표입니다.

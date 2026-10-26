@@ -4,6 +4,8 @@
 
 Zamień historię rozmów z Claude.ai w lokalną stronę HTML, którą każda przeglądarka otworzy bez połączenia z Internetem, i prowadź narastające archiwum swoich rozmów, łącznie z tymi, które zostały później usunięte z Claude.ai.
 
+![Zrzut ekranu](docs/apercu.png)
+
 Ten projekt opiera się na [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) autorstwa Judsona Neera, mocno zmienionym i rozbudowanym (zob. „Licencja i podziękowania”).
 
 > Ten projekt jest niezależny i niepowiązany z Anthropic. Claude jest znakiem towarowym Anthropic.

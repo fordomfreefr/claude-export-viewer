@@ -4,6 +4,8 @@
 
 Claude.ai の会話履歴を、インターネット接続なしでどのブラウザーでも開けるローカルの HTML サイトに変換し、会話の累積アーカイブを保存します。その後 Claude.ai で削除された会話も残ります。
 
+![スクリーンショット](docs/apercu.png)
+
 このプロジェクトは Judson Neer 氏の [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) をもとに、大幅に変更・拡張したものです（「ライセンスと謝辞」を参照）。
 
 > このプロジェクトは独立したもので、Anthropic とは提携していません。Claude は Anthropic の商標です。

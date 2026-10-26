@@ -4,6 +4,8 @@
 
 Zet de gespreksgeschiedenis van Claude.ai om in een lokale HTML-site die elke browser zonder internetverbinding kan openen, en bewaar een doorlopend archief van uw gesprekken, ook van de gesprekken die sindsdien op Claude.ai zijn verwijderd.
 
+![Schermafbeelding](docs/apercu.png)
+
 Dit project is gebaseerd op [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) van Judson Neer, sterk aangepast en uitgebreid (zie „Licentie en dank”).
 
 > Dit project is onafhankelijk en niet verbonden aan Anthropic. Claude is een merk van Anthropic.

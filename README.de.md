@@ -4,6 +4,8 @@
 
 Verwandeln Sie den Unterhaltungsverlauf von Claude.ai in eine lokale HTML-Website, die jeder Browser ohne Internetverbindung öffnen kann, und bewahren Sie ein fortlaufendes Archiv Ihrer Unterhaltungen auf, auch derjenigen, die inzwischen auf Claude.ai gelöscht wurden.
 
+![Bildschirmfoto](docs/apercu.png)
+
 Dieses Projekt basiert auf [claude-export-viewer](https://github.com/lordjabez/claude-export-viewer) von Judson Neer und wurde stark verändert und erweitert (siehe „Lizenz und Dank“).
 
 > Dieses Projekt ist unabhängig und nicht mit Anthropic verbunden. Claude ist eine Marke von Anthropic.
