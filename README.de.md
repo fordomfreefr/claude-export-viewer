@@ -1,4 +1,4 @@
-# Claude Export Viewer (Version 2026.10.26.15)
+# Claude Export Viewer (Version 2026.10.26.16)
 
 [English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | **Deutsch** | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 

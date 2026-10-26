@@ -1,3 +1,3 @@
 """Claude Export Viewer: local, offline viewer and archive for Claude.ai data exports."""
 
-__version__ = "2026.10.26.15"
+__version__ = "2026.10.26.16"

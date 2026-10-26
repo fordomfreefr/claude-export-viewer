@@ -108,3 +108,39 @@ def test_repeated_injected_instructions_shown_once(tmp_path: Path) -> None:
     page = (out / "conversations" / "c1.html").read_text(encoding="utf-8")
     assert page.count("Mémoire A") == 1 and page.count("Mémoire B") == 1
     assert all(f"q{i}" in page for i in range(4))
+
+
+def test_archive_never_served(tmp_path: Path) -> None:
+    """The private archive is refused however the path is written (".." and encoded forms)."""
+    import http.client
+    out = tmp_path / "site"
+    build_site(_data({"file_name": "a.txt", "extracted_content": "x"}), out)
+    server = make_server(out, 0)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    port = server.server_address[1]
+    try:
+        for path in ("/archive/etat.json", "/archive", "/conversations/../archive/etat.json", "//archive/etat.json",
+                     "/%2e%2e/archive/etat.json", "/x/%2e%2e/archive/etat.json", "/ARCHIVE/../archive/etat.json",
+                     "/archive%2fetat.json", "/./archive/etat.json"):
+            c = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+            c.putrequest("GET", path, skip_host=True)
+            c.putheader("Host", f"127.0.0.1:{port}")
+            c.endheaders()
+            r = c.getresponse()
+            body = r.read()
+            c.close()
+            assert r.status in (403, 404) and b"conversations" not in body, (path, r.status)
+        assert request_ok(port, "/index.html") and request_ok(port, "/conversations/c1.html")  # the site still served
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def request_ok(port: int, path: str) -> bool:
+    import http.client
+    c = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+    c.request("GET", path, headers={"Host": f"127.0.0.1:{port}"})
+    r = c.getresponse()
+    r.read()
+    c.close()
+    return r.status == 200

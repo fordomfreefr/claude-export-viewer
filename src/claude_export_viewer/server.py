@@ -209,6 +209,16 @@ class SiteHandler(SimpleHTTPRequestHandler):
         query = dict(p.split("=", 1) for p in urlparse(self.path).query.split("&") if "=" in p)
         return i18n.normalize(self.headers.get("X-CEV-Lang") or query.get("lang")) or i18n.language()
 
+    def _in_archive(self) -> bool:
+        """True for a request reaching the private archive folder, however the path is written
+        ("/archive/…", "/x/../archive/…", "%2e%2e"…): checked on the file that would be served."""
+        try:
+            target = Path(self.translate_path(self.path)).resolve()
+        except (OSError, ValueError):
+            return True
+        archive = (self.ctx.site_dir / "archive").resolve()
+        return target == archive or archive in target.parents
+
     def _authorized(self) -> bool:
         return self._local_request() and secrets.compare_digest(self.headers.get("X-CEV-Token", ""), self.ctx.token)
 
@@ -253,7 +263,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
         if m:
             self._export(m.group(1), m.group(2), "versions=0" not in url.query.split("&"), self._lang())
             return
-        if path.startswith("/archive/") or path == "/archive":
+        if self._in_archive():
             self._text(403, t("server.denied", self._lang()))
             return
         # Always send the file: a file rewritten within the same second as the copy in the
