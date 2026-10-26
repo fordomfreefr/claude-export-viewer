@@ -1,6 +1,6 @@
 # Claude Export Viewer (version 2026.10.25.1)
 
-[English](README.md) | **Français**
+[English](README.md) | **Français** | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Transformez l'historique des discussions du site Claude.ai en un site HTML local, consultable dans n'importe quel navigateur, sans connexion Internet, et gardez une archive cumulative de vos conversations, y compris celles supprimées depuis sur le site Claude.ai.
 
@@ -146,7 +146,7 @@ Le site s'ouvre ensuite par `index.html`, sur n'importe quel ordinateur, même s
 
 ## Langues
 
-Le programme parle 12 langues : anglais, français, espagnol, allemand, italien, portugais (Brésil), néerlandais, polonais, russe, chinois (simplifié), japonais et coréen.
+Le programme parle 12 langues : anglais, français, espagnol, allemand, italien, portugais, néerlandais, polonais, russe, chinois (simplifié), japonais et coréen.
 
 - **Les pages** s'ouvrent dans la langue du navigateur, ou en anglais si elle n'est pas disponible. Le menu en haut à droite du sommaire change la langue de tout le site d'un clic : sommaire, conversations, dates (au format de chaque pays), exports et journal d'import. Le navigateur retient le choix.
 - **Les messages de la console** suivent la langue du système, ou celle de l'option `--langue` (`--lang`) : `--langue en`, `--langue de`…

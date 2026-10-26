@@ -1,6 +1,6 @@
 # Claude Export Viewer (version 2026.10.25.1)
 
-**English** | [Français](README.fr.md)
+**English** | [Français](README.fr.md) | [Español](README.es.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) | [Português](README.pt.md) | [Nederlands](README.nl.md) | [Polski](README.pl.md) | [Русский](README.ru.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 Turn the chat history of Claude.ai into a local HTML site that any browser can open, with no internet connection, and keep a cumulative archive of your conversations, including the ones deleted from Claude.ai since.
 
@@ -146,7 +146,7 @@ The site then opens from `index.html`, on any computer, even without the program
 
 ## Languages
 
-The program speaks 12 languages: English, French, Spanish, German, Italian, Portuguese (Brazil), Dutch, Polish, Russian, Chinese (simplified), Japanese and Korean.
+The program speaks 12 languages: English, French, Spanish, German, Italian, Portuguese, Dutch, Polish, Russian, Chinese (simplified), Japanese and Korean.
 
 - **The pages** open in the browser's language, or in English when it is not available. The menu at the top right of the index changes the language of the whole site with one click: index, conversations, dates (in each country's format), exports and import log. The browser remembers the choice.
 - **Console messages** follow the system language, or the `--lang` option (`--langue`): `--lang fr`, `--lang de`…
