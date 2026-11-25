@@ -3,24 +3,35 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import fetch, i18n, office_export, settings, system, userfiles
-from .archive import Archive, ArchiveError
+from . import backup, fetch, i18n, office_export, settings, system, userfiles, verify
+from .archive import Archive, ArchiveError, ArchiveLock, DiskFull
 from .html_builder import build_site_from_archive
 from .i18n import t
 from .loader import (
+    BIG_MARK,
+    DATE_MARK,
     ExportDate,
     classify,
     data_date,
+    date_question,
+    export_date,
+    file_categories,
     iter_conversation_records,
+    iter_conversation_spools,
     load_project_names,
     load_users,
     manifest_date,
     nearby_manifest_date,
+    pop_left_out,
+    pop_read_errors,
+    pop_too_big,
     print_warnings,
     zip_date,
 )
@@ -39,21 +50,7 @@ def _parse_manual_date(value: str) -> datetime:
 
 
 def _export_date(found, manual: datetime | None) -> ExportDate:
-    if manual:
-        return ExportDate(manual, t("cli.date_source.manual"))
-    d = manifest_date(found)
-    if d:
-        return ExportDate(d, t("cli.date_source.manifest"))
-    latest = data_date(found)
-    nearby = nearby_manifest_date(found, latest)
-    if nearby:
-        return ExportDate(nearby[0], t("cli.date_source.nearby", name=nearby[1]))
-    d = zip_date(found)
-    if d and (latest is None or d >= latest):
-        return ExportDate(d, t("cli.date_source.zip"))
-    if latest:
-        return ExportDate(latest, t("cli.date_source.data"))
-    return ExportDate(datetime.now(timezone.utc), t("cli.date_source.today"))
+    return export_date(found, manual)
 
 
 _KNOWN_BLOCKS = {"text", "thinking", "tool_use", "tool_result", "token_budget"}
@@ -193,15 +190,19 @@ def _language_from(argv: list[str]) -> str | None:
 
 
 def _parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description=t("cli.help.description"))
+    p = argparse.ArgumentParser(description=t("cli.help.description"), allow_abbrev=False)  # "--installer" ≠ "--installer-icone"
     add = p.add_argument
     add("inputs", type=Path, nargs="*", help=t("cli.help.inputs"))
-    add("-o", "--output", type=Path, default=Path("site"), help=t("cli.help.output"))
+    add("-o", "--output", type=Path, default=None, help=t("cli.help.output"))  # None: ~/claude_site (11/11)
     add("--garder-vides", "--keep-empty", dest="keep_empty", action="store_true", help=t("cli.help.keep_empty"))
     add("--date-export", "--export-date", dest="date_export", type=_parse_manual_date,
         metavar=t("cli.help.date_metavar"), help=t("cli.help.date_export"))
+    add("--date-confirmee", "--date-confirmed", dest="date_confirmed", action="store_true",
+        help=t("cli.help.date_confirmed"))
+    add("--limite-message", "--message-limit", dest="message_limit", type=int, metavar="MO",
+        help=t("cli.help.message_limit"))
     add("--reconstruire", "--rebuild", dest="rebuild", action="store_true", help=t("cli.help.rebuild"))
-    add("--tout", "--all", dest="all_files", action="store_true", help=t("cli.help.all"))
+    add("--tout", "--all", dest="all_files", action="store_true", help=argparse.SUPPRESS)  # now the default
     add("--navigateur", "--browser", dest="browser", metavar=t("cli.help.command_metavar"), help=t("cli.help.browser"))
     add("--manuel", "--manual", dest="manual", action="store_true", help=t("cli.help.manual"))
     add("--delai", "--timeout", dest="timeout", type=float, default=None, metavar=t("cli.help.seconds_metavar"),
@@ -209,6 +210,7 @@ def _parser() -> argparse.ArgumentParser:
     add("--sans-navigateur", "--no-browser", dest="no_browser", action="store_true", help=t("cli.help.no_browser"))
     add("--odt", metavar=t("cli.help.conversation_metavar"), help=t("cli.help.odt"))
     add("--docx", metavar=t("cli.help.conversation_metavar"), help=t("cli.help.docx"))
+    add("--txt", metavar=t("cli.help.conversation_metavar"), help=t("cli.help.txt"))
     add("--fil-principal", "--main-thread", dest="main_thread", action="store_true", help=t("cli.help.main_thread"))
     add("--dossier-export", "--export-dir", dest="export_dir", type=Path, default=Path("."),
         metavar=t("cli.help.folder_metavar"), help=t("cli.help.export_dir"))
@@ -216,8 +218,15 @@ def _parser() -> argparse.ArgumentParser:
     add("--ouvrir", "--open", dest="open_mode", action="store_true", help=t("cli.help.open"))
     add("--arret-auto", "--idle", dest="idle", type=float, default=30, metavar=t("cli.help.minutes_metavar"),
         help=t("cli.help.idle"))
+    add("--installer", "--install", dest="installer", action="store_true", help=t("cli.help.installer"))
     add("--installer-icone", "--install-icon", dest="install_icon", action="store_true", help=t("cli.help.install_icon", name=t("desktop.name")))
     add("--structure", action="store_true", help=t("cli.help.structure"))
+    add("--sauvegarder", "--backup", dest="backup", action="store_true", help=t("cli.help.backup"))
+    add("--tout-exporter", "--export-all", dest="export_all", action="store_true", help=t("cli.help.export_all"))
+    add("--verifier", "--verify", dest="verify", action="store_true", help=t("cli.help.verify"))
+    add("--reparer", "--repair", dest="repair", action="store_true", help=t("cli.help.repair"))
+    add("--desinstaller", "--uninstall", dest="uninstall", action="store_true", help=t("cli.help.uninstall"))
+    add("--restaurer", "--restore", dest="restore", type=Path, metavar="ZIP", help=t("cli.help.restore"))
     add("--telechargements", "--downloads", dest="downloads", metavar=t("cli.help.folder_metavar"),
         help=t("cli.help.downloads"))
     add("--langue", "--lang", dest="language", metavar="CODE",
@@ -245,10 +254,39 @@ def _print_import_stats(stats, start: float) -> None:
         print("  " + t("cli.import.older"))
     if stats.suspicious:
         print("\n" + t("cli.import.suspicious", n=len(stats.newly_deleted)) + "\n")
+    if stats.incomplete:
+        print("\n" + t("cli.import.incomplete") + "\n")
+    if stats.date_before_newest:
+        fmt = t("fmt.date") + " %H:%M"
+        print("\n" + t("cli.import.date_before_newest", export=datetime.fromisoformat(stats.export_date).strftime(fmt),
+                        newest=stats.newest.strftime(fmt), suggest=stats.newest.replace(microsecond=0).isoformat()) + "\n")
+
+
+def _print_left_out(found, unused_categories: list[str]) -> None:
+    """One line at the end of each import: what CEV did not take, and why (AE-f2)."""
+    sep = t("fmt.list_sep")
+
+    def counted(counter) -> str:
+        return sep.join(k if n == 1 else f"{k} ×{n}" for k, n in sorted(counter.items()))
+
+    left = pop_left_out()
+    items = []
+    if unused_categories:
+        items.append(t("cli.left_out.categories", names=sep.join(unused_categories)))
+    files = file_categories(found.others)
+    if files:
+        items.append(t("cli.left_out.files", names=counted(files)))
+    if left.duplicates:
+        items.append(t("cli.left_out.duplicates", n=left.duplicates))
+    if left.unknown_blocks:
+        items.append(t("cli.left_out.blocks", types=counted(left.unknown_blocks)))
+    if left.broken_blocks:
+        items.append(t("cli.left_out.broken", n=left.broken_blocks))
+    print("  " + (t("cli.left_out", items=t("cli.left_out.sep").join(items)) if items else t("cli.left_out.nothing")))
 
 
 def _find_user_files(archive: Archive, site: Path) -> None:
-    """Copy into the site the user's own files of the conversations still missing (see userfiles)."""
+    """Associate the links of the conversations with the user's files and copy them into the site (see userfiles)."""
     def say(names: int, wanted: int, folders: list[Path]) -> None:
         print(t("cli.files.search", n=names, folders=" ; ".join(str(f) for f in folders) or "-"), flush=True)
 
@@ -261,17 +299,209 @@ def _find_user_files(archive: Archive, site: Path) -> None:
         print("  " + t("cli.files.found", n=n))
 
 
+def _install_icon(site: Path, program: Path) -> None:
+    """The icon of the archives (menu and desktop), opening ``site`` with ``program``."""
+    from .desktop import install_launcher, install_windows
+
+    if system.WINDOWS:
+        try:
+            written = install_windows(site, program)
+        except OSError as exc:
+            _err(str(exc))
+            sys.exit(1)
+        done = "cli.icon.done_windows"
+    elif sys.platform.startswith("linux"):
+        written, done = install_launcher(site, program), "cli.icon.done"
+    else:
+        _err(t("cli.icon.unsupported"))
+        sys.exit(1)
+    for path in written:
+        print(t("cli.icon.created", path=path))
+    print(t(done, name=t("desktop.name")))
+
+
+def _install(args: argparse.Namespace) -> None:
+    """--installer (P2, 11/11): the program to its place (an earlier version replaced), the icon, then the archives
+    opened by the program installed (a server of the earlier version is stopped by that launch)."""
+    import subprocess
+
+    from . import install, office_export
+
+    program = _program_path()
+    dest = install.target()
+    try:
+        moved = install.place_program(program.parent, dest, args.output)
+    except install.InstallError as exc:
+        _err(t(exc.key, folder=exc.folder))
+        sys.exit(1)
+    except OSError as exc:
+        _err(t("cli.error", message=exc))
+        sys.exit(1)
+    print(t("cli.install.copied" if moved else "cli.install.same", folder=dest))
+    _install_icon(args.output, dest / install.LAUNCHER)
+    if office_export.pandoc_path() is None:
+        print(t("cli.install.pandoc", hint=system.pandoc_hint()))
+    if not args.no_browser:
+        print(t("cli.install.opening", folder=args.output))
+        subprocess.Popen([system.windowless_python(), str(dest / install.LAUNCHER), "-o", str(args.output), "--ouvrir"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=not system.WINDOWS, **system.no_window())
+
+
+def _ask(question: str, default: bool) -> bool:
+    """A yes / no question in the terminal (the default with Enter)."""
+    yes, no = t("cli.yes_letter"), t("cli.no_letter")
+    answer = input(f"{question} [{yes.upper() if default else yes}/{no if default else no.upper()}] ").strip().lower()
+    return default if not answer else answer.startswith(yes)
+
+
+def _uninstall(args: argparse.Namespace) -> None:
+    """--desinstaller (AF-m1, 14/11): the same steps as the button of the index, asked in the terminal."""
+    from . import uninstall
+    from .server import stop_running
+
+    if not sys.stdin.isatty():
+        _err(t("uninstall.needs_terminal"))
+        sys.exit(1)
+    for url in stop_running(args.output):
+        print(t("cli.server.old_stopped", url=url))
+    site = args.output.expanduser().resolve()
+    if (site / "archive").is_dir():  # AE-m10: what is copied is checked first
+        if verify.check(site, _say).problems:
+            print(t("verify.uninstall_warn"))
+            if not _ask(t("verify.uninstall_ask"), False):
+                print(t("uninstall.cancelled"))
+                return
+    sizes = uninstall.copy_sizes(site)
+    try:
+        dest = uninstall.copies_dir(site)
+    except backup.BackupError as exc:
+        _err(t(exc.key))
+        sys.exit(1)
+    print(t("uninstall.copies_head", path=dest))
+    what = [w for w in uninstall.COPIES
+            if sizes[w] and _ask(t(f"uninstall.copy.{w}", size=_mb(sizes[w])), True)]
+    entries = uninstall.targets(site)
+    print(t("uninstall.removed_head"))
+    for e in entries:
+        print(f"  {e['path']}  ({_mb(e['size'])} Mo)")
+    print(t("uninstall.browser_note"))
+    if not _ask(t("uninstall.confirm"), False):
+        print(t("uninstall.cancelled"))
+        return
+    say = lambda key, a: print("  " + t(key, **a), flush=True)  # noqa: E731
+    lock = ArchiveLock(site).acquire(on_wait=lambda: print(t("cli.archive.busy"), flush=True))
+    try:
+        uninstall.make_copies(Archive(site), site, dest, what, say)
+    except uninstall.UninstallError as exc:
+        _err(t(exc.key, **exc.args_))
+        _err(t("uninstall.nothing_removed"))
+        sys.exit(1)
+    finally:
+        lock.release()
+    failed = uninstall.remove(entries, say)
+    print(t("uninstall.done_some" if failed else "uninstall.done", path=dest))
+
+
+def _say(key: str, args: dict) -> None:
+    print(("" if key == "verify.start" else "  ") + t(key, **args), flush=True)
+
+
+def _ask_too_big(sizes: list[int]) -> None:
+    """Messages set aside, too big for the free memory (21/11): how to read them all the same (the page asks)."""
+    if not sizes:
+        return
+    from . import loader
+    size = max(sizes) // 2**20 + 1
+    need = size * loader._READ_FACTOR
+    free = (system.available_memory() or 0) // 2**20
+    print("\n" + t("cli.import.too_big", n=len(sizes), size=size, need=need, free=free) + "\n", flush=True)
+    if os.environ.get("CEV_PROGRESS"):
+        print(f"{BIG_MARK}{size} {need} {free}", flush=True)
+
+
+def _ask_date(q) -> None:
+    """An export date beyond the computer's clock: the three dates and the two ways out (the page asks instead)."""
+    fmt = t("fmt.date") + " %H:%M"
+    newest = q.newest.strftime(fmt) if q.newest else t("cli.import.date_unknown")
+    suggest = q.newest.replace(microsecond=0).isoformat() if q.newest else "?"
+    print("\n" + t("cli.import.date_future", export=q.export.strftime(fmt), clock=q.clock.strftime(fmt), newest=newest,
+                    suggest=suggest) + "\n", flush=True)
+    if os.environ.get("CEV_PROGRESS"):
+        stamp = lambda d: d.replace(microsecond=0).isoformat() if d else "-"  # noqa: E731
+        print(f"{DATE_MARK}{stamp(q.export)} {stamp(q.clock)} {stamp(q.newest)}", flush=True)
+
+
+def _verify(args: argparse.Namespace) -> None:
+    """--verifier / --reparer (AE-m10): every file of the archive read again (verify.py); the conversations unreadable
+    or missing made again from the exports kept, asked in a terminal (--reparer: without asking), then their pages."""
+    site = args.output
+    if not (site / "archive").is_dir():
+        _err(t("cli.no_input", folder=site))
+        sys.exit(1)
+    start = time.monotonic()
+    lock = ArchiveLock(site).acquire(on_wait=lambda: print(t("cli.archive.busy"), flush=True))
+    try:
+        report = verify.check(site, _say)
+        n = report.n_repairable  # conversations to make again, exports to redate (review of 21/11)
+        if not n:
+            return
+        if os.environ.get("CEV_PROGRESS"):  # run by the server: the button "Réparer" of the page
+            print(f"{verify.REPAIRABLE_MARK}{n}", flush=True)
+        if not (args.repair or (sys.stdin.isatty() and _ask(t("verify.repair_ask", n=n), True))):
+            return
+        done = verify.redate(site, report.redate, _say) if report.redate else 0
+        if report.repairable:
+            done += verify.repair(site, report.repairable, _say)
+        if done:
+            _render_site(args, Archive(site), start)
+    finally:
+        lock.release()
+
+
+def _mb(size: int) -> str:
+    return f"{size / 1e6:.1f}".replace(".", t("fmt.decimal"))
+
+
 def main(argv: list[str] | None = None) -> None:
     argv = list(sys.argv[1:] if argv is None else argv)
     system.safe_console()
     i18n.set_language(_language_from(argv) or i18n.detect())
     args = _parser().parse_args(argv)
+    if args.output is None:  # the usual place of the archives (was "site/" in the current folder)
+        args.output = Path.home() / "claude_site"
 
+    if args.restore is not None:  # AF-m1 (14/11): the ZIP of a site put back, then the archives opened
+        from . import uninstall
+
+        try:
+            uninstall.restore(args.restore, args.output, say=lambda key, a: print(t(key, **a)))
+        except uninstall.UninstallError as exc:
+            _err(t(exc.key, **exc.args_))
+            sys.exit(1)
+        args.open_mode = True
+    if args.uninstall:
+        _uninstall(args)
+        return
+    if args.verify or args.repair:
+        _verify(args)
+        return
     try:
         archive = Archive(args.output)
     except ArchiveError as exc:
         _err(t("cli.error", message=exc))
         sys.exit(1)
+    if args.export_all:
+        from . import allexport
+
+        try:
+            allexport.build_all(archive, args.output, say=lambda key, a: print(t(key, **a), flush=True))
+        except (OSError, backup.BackupError) as exc:
+            _err(t(exc.key) if isinstance(exc, backup.BackupError) else t("cli.error", message=exc))
+            sys.exit(1)
+        return
+    if archive.interrupted_import:  # a cut import: the same export imported again completes the archive
+        _err(t("cli.import.interrupted", date=i18n.Day(archive.interrupted_import["date"][:10])))
     missing = [p for p in args.inputs if not p.expanduser().exists()]
     if missing:
         for p in missing:
@@ -287,10 +517,30 @@ def main(argv: list[str] | None = None) -> None:
               t("cli.downloads.reset", folder=settings.search_folders(args.output)[0]))
         if not args.inputs:
             return
+    if args.backup and not args.inputs:
+        if not archive.exists:
+            _err(t("cli.no_input", folder=args.output))
+            sys.exit(1)
+        held = ArchiveLock(args.output).acquire(on_wait=lambda: print(t("cli.archive.busy"), flush=True))  # noqa: F841 - kept while the ZIP is written
+        if verify.check(args.output, _say).problems:  # AE-m10: the backup is made all the same
+            print(t("verify.backup_warn"))
+        try:
+            backup.make_backup(args.output, say=lambda key, a: print(t(key, **a)))
+        except backup.BackupError as exc:
+            _err(t(exc.key))
+            sys.exit(1)
+        except OSError as exc:
+            _err(t("backup.failed", error=exc))
+            sys.exit(1)
+        return
     if args.structure and not args.inputs:
         _err(t("cli.structure.no_input"))
         sys.exit(1)
-    if not args.inputs and not archive.exists and not args.structure:
+    if (not args.inputs and not archive.exists and not (args.structure or args.install_icon or args.installer or args.backup
+                                                        or args.odt or args.docx or args.txt or args.downloads)):
+        args.open_mode = True  # nothing yet: the archives open on their welcome page, as with the icon
+    first_run = not args.inputs and not archive.exists and (args.open_mode or args.serve is not None)
+    if not args.inputs and not archive.exists and not args.structure and not args.install_icon and not args.installer and not first_run:
         _err(t("cli.no_input", folder=args.output))
         sys.exit(1)
 
@@ -298,24 +548,11 @@ def main(argv: list[str] | None = None) -> None:
         _print_structure(args.inputs)
         return
 
+    if args.installer:
+        _install(args)
+        return
     if args.install_icon:
-        from .desktop import install_launcher, install_windows
-
-        if system.WINDOWS:
-            try:
-                written = install_windows(args.output, _program_path())
-            except OSError as exc:
-                _err(str(exc))
-                sys.exit(1)
-            done = "cli.icon.done_windows"
-        elif sys.platform.startswith("linux"):
-            written, done = install_launcher(args.output, _program_path()), "cli.icon.done"
-        else:
-            _err(t("cli.icon.unsupported"))
-            sys.exit(1)
-        for path in written:
-            print(t("cli.icon.created", path=path))
-        print(t(done, name=t("desktop.name")))
+        _install_icon(args.output, _program_path())
         return
 
     if args.open_mode or args.serve is not None:
@@ -333,25 +570,24 @@ def main(argv: list[str] | None = None) -> None:
             print(t("cli.server.already_open", url=running))
             return
 
-    if args.odt or args.docx:
-        _export_one(archive, args.odt or args.docx, "odt" if args.odt else "docx", args.export_dir,
-                    versions=not args.main_thread)
+    if args.odt or args.docx or args.txt:
+        fmt = "odt" if args.odt else "docx" if args.docx else "txt"
+        _export_one(archive, args.odt or args.docx or args.txt, fmt, args.export_dir, versions=not args.main_thread)
         return
 
     start = time.monotonic()
     open_index = False
 
     manifest = fetch.manifest_from_inputs(args.inputs) if args.inputs else None
+    unused_categories: list[str] = []
     if manifest:
         print(t("cli.manifest.name", name=manifest.path.name))
         print("  " + t("cli.manifest.dates", created=manifest.created_at, expires=manifest.expires_at))
-        categories = [f.category for f in manifest.files] if args.all_files else fetch.DEFAULT_CATEGORIES
         timeout = args.timeout if args.timeout is not None else (900 if args.manual else 300)
         try:
             result = fetch.fetch_export(
                 manifest,
                 args.output,
-                categories=categories,
                 opener=fetch.browser_opener(args.browser),
                 folders=fetch.download_folders(
                     manifest, [f for f in [settings.downloads_folder(args.output)] if f is not None]),
@@ -368,12 +604,39 @@ def main(argv: list[str] | None = None) -> None:
         if result.missing:
             print("  " + t("cli.manifest.missing", files=", ".join(result.missing)))
         print("  " + t("cli.manifest.stored", folder=result.export_dir))
-        keep = set(fetch.DEFAULT_CATEGORIES)
+        keep = set(fetch.USED_CATEGORIES)
+        unused_categories = sorted(c for c in result.files if c and c not in keep)
         args.inputs = [p for c, paths in result.files.items() if c in keep for p in paths]
         if result.manifest_copy:
             args.inputs.append(result.manifest_copy)
         open_index = not args.no_browser
 
+    if args.open_mode and not args.inputs:
+        # AF-m1 (14/11): opened without an import (the icon, --installer): the server answers at once and the browser
+        # shows the progress while the pages are made again (all of them after an update of the program)
+        from .server import serve
+
+        def build(report: Callable[[int, int], None]) -> None:
+            lock = ArchiveLock(args.output).acquire(on_wait=lambda: print(t("cli.archive.busy"), flush=True))
+            try:
+                _render_site(args, Archive(args.output), start, report)
+            finally:
+                lock.release()
+
+        serve(args.output, args.serve or 8000, None if args.no_browser else fetch.browser_opener(args.browser),
+              idle_minutes=args.idle, launcher=_program_path(), build=build)
+        return
+
+    # Import and site: one program at a time (another import, a rebuild, the server's actions)
+    lock = ArchiveLock(args.output).acquire(on_wait=lambda: print(t("cli.archive.busy"), flush=True))
+    try:
+        archive = Archive(args.output)  # read again: the other program may have changed it
+    except ArchiveError as exc:
+        _err(t("cli.error", message=exc))
+        sys.exit(1)
+    if args.message_limit:
+        from . import loader
+        loader.MESSAGE_LIMIT = args.message_limit << 20  # (21/11) the user agreed to read bigger messages
     if args.inputs:
         found = classify(args.inputs)
         if not found.conversations:
@@ -389,37 +652,39 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  {s.label}")
         date = _export_date(found, args.date_export)
         print(t("cli.import.date", date=date.value.strftime(t("fmt.date") + " %H:%M"), source=date.source))
+        question = None if args.date_confirmed else date_question(found, date)
+        if question is not None:  # (review of 21/11) the export date or the clock is wrong: nothing imported, asked
+            _ask_date(question)
+            lock.release()
+            sys.exit(3)
 
         users = {u.uuid: u.full_name for u in load_users(found)}
-        stats = archive.import_export(
-            iter_conversation_records(found.conversations),
-            date,
-            label=", ".join(s.label for s in found.conversations),
-            skip_empty=not args.keep_empty,
-            users=users,
-            projects=load_project_names(found),
-        )
+        pop_left_out()
+        pop_read_errors()  # (the date may have been looked for in the same files)
+        pop_too_big()
+        try:
+            stats = archive.import_export(
+                iter_conversation_spools(found.conversations, archive.temp_dir),  # never a conversation whole (21/11)
+                date,
+                label=", ".join(s.label for s in found.conversations),
+                skip_empty=not args.keep_empty,
+                users=users,
+                projects=load_project_names(found),
+                read_ok=lambda: not pop_read_errors(),
+            )
+        except DiskFull as exc:  # (review of 21/11) the archive left as by an import cut short: imported again later
+            _err(str(exc))
+            lock.release()
+            sys.exit(1)
         archive.save()
         print_warnings()
         _print_import_stats(stats, start)
+        _ask_too_big(pop_too_big())
+        _print_left_out(found, unused_categories)
 
-    render_start = time.monotonic()
-
-    def progress(n: int) -> None:
-        if n % 50 == 0:
-            print("  " + t("cli.render.progress", n=n, seconds=f"{time.monotonic() - render_start:.0f}"), flush=True)
-
-    _find_user_files(archive, args.output)
-    print(t("cli.render.start", folder=args.output))
-    render = build_site_from_archive(archive, args.output, force=args.rebuild, progress=progress)
-    summary = t("cli.render.done", seconds=f"{time.monotonic() - start:.0f}",
-                pages=t("cli.render.pages", n=render.rendered), conversations=t("cli.render.total", n=render.total))
-    if render.deleted:
-        summary += " " + t("cli.render.deleted", n=render.deleted)
-    print(summary + t("fmt.period"))
-    if render.failed:
-        print("  " + t("cli.render.failed", n=render.failed))
+    _render_site(args, archive, start)
     index = (args.output / "index.html").resolve()
+    lock.release()
     if args.serve is not None or args.open_mode:
         from .server import serve
 
@@ -436,6 +701,41 @@ def main(argv: list[str] | None = None) -> None:
         fetch.browser_opener(args.browser)(index.as_uri())
     elif sys.stdout.isatty():
         print(t("cli.open_hint", path=index))
+
+
+def _render_site(args: argparse.Namespace, archive: Archive, start: float,
+                 report: Callable[[int, int], None] | None = None) -> None:
+    """The pages and the index from the archive (changed pages only, all of them after an update of the program);
+    report(n, total): the progress, for the page shown by the server meanwhile (AF-m1)."""
+    render_start = time.monotonic()
+    total = len(archive.conversations)
+    marks = bool(os.environ.get("CEV_PROGRESS"))  # run by the server (an import): the bar of its page (15/11)
+    if report is not None:
+        report(0, total)  # (the search of the user's files comes first)
+    if marks:
+        print(f"\x1fCEV-PROGRESS 0 {total}", flush=True)
+
+    def progress(n: int) -> None:
+        if report is not None:
+            report(n, total)
+        if marks:
+            print(f"\x1fCEV-PROGRESS {n} {total}", flush=True)
+        if n % 50 == 0:
+            print("  " + t("cli.render.progress", n=n, seconds=f"{time.monotonic() - render_start:.0f}"), flush=True)
+
+    _find_user_files(archive, args.output)
+    from . import speech
+
+    speech.drop_old_cache(args.output)  # the sounds kept in the site up to 2026.11.7
+    print(t("cli.render.start", folder=args.output))
+    render = build_site_from_archive(archive, args.output, force=args.rebuild, progress=progress)
+    summary = t("cli.render.done", seconds=f"{time.monotonic() - start:.0f}",
+                pages=t("cli.render.pages", n=render.rendered), conversations=t("cli.render.total", n=render.total))
+    if render.deleted:
+        summary += " " + t("cli.render.deleted", n=render.deleted)
+    print(summary + t("fmt.period"))
+    if render.failed:
+        print("  " + t("cli.render.failed", n=render.failed))
 
 
 if __name__ == "__main__":

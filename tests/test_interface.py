@@ -58,7 +58,7 @@ def test_summary_counts_versions_and_last_message() -> None:
 
 def test_index_information(tmp_path: Path) -> None:
     index = (site(tmp_path) / "index.html").read_text(encoding="utf-8")
-    assert '<html lang="fr">' in index and ">Conversations Claude</span></h1>" in index
+    assert '<html lang="fr">' in index and ">Bibliothèque Claude</span></h1>" in index and 'data-go="hist-back" id="hist-back"' in index
     assert "Dernier export importé : 20/10/2026" in index
     a, b = item(index, "Conversation A"), item(index, "Conversation B")
     assert "01/10/2026 &middot; dernier échange le 05/10/2026" in re.sub(r"<[^>]+>|\n\s*", "", a)
@@ -77,7 +77,7 @@ def test_page_information(tmp_path: Path) -> None:
     out = site(tmp_path)
     page_a = next((out / "conversations").glob("1111*.html")).read_text(encoding="utf-8")
     page_b = next((out / "conversations").glob("6666*.html")).read_text(encoding="utf-8")
-    assert "Toutes les conversations" in page_a
+    assert "Vers le sommaire des conversations" in page_a  # the round button back to the index (C1)
     assert re.search(r"01/10/2026 à \d\d:00", page_a)  # local time, French format
     assert f'href="https://claude.ai/chat/{UUID_A}"' in page_a
     assert "claude.ai/chat/" not in page_b  # deleted on claude.ai: no dead link

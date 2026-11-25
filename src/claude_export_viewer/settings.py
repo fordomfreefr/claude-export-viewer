@@ -13,7 +13,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+from . import jsonfile
 from . import fetch
+
+_one_at_a_time = jsonfile.one_at_a_time()  # reading, changing, writing: one change at a time
 
 FILE = "settings.json"
 
@@ -23,13 +26,11 @@ def _path(site_dir: Path) -> Path:
 
 
 def load(site_dir: Path) -> dict[str, Any]:
-    try:
-        data = json.loads(_path(site_dir).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = jsonfile.read(_path(site_dir))
     return data if isinstance(data, dict) else {}
 
 
+@_one_at_a_time
 def save(site_dir: Path, data: dict[str, Any]) -> None:
     path = _path(site_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -47,6 +48,7 @@ def downloads_folder(site_dir: Path) -> Path | None:
     return folder if folder.is_dir() else None
 
 
+@_one_at_a_time
 def set_downloads_folder(site_dir: Path, value: str) -> Path | None:
     """Remember the downloads folder ("" goes back to the folder of the system).
 
@@ -89,6 +91,7 @@ def file_folders_set(site_dir: Path) -> bool:
     return isinstance(load(site_dir).get("file_folders"), list)
 
 
+@_one_at_a_time
 def set_file_folders(site_dir: Path, values: list[str] | None) -> list[Path]:
     """Remember the folders (None goes back to the default). Raises ValueError(folder) for a missing one."""
     data = load(site_dir)

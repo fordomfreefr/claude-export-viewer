@@ -32,6 +32,7 @@ def visible(pg, text: str) -> bool:
 def test_fold_answers(tmp_path: Path, page) -> None:  # noqa: F811
     pg = page
     url = (_site(tmp_path) / "conversations" / "c1.html").as_uri()
+    pg.set_viewport_size({"width": 1366, "height": 800})  # 1000 px: the two columns of buttons cover the arrows
     pg.goto(url)
     assert pg.locator(".fold-one").count() == 2  # not on the last message, which has no answer
     assert visible(pg, "Réponse un") and visible(pg, "Réponse deux")
@@ -82,59 +83,64 @@ def test_copy_message_and_keys(tmp_path: Path, page) -> None:  # noqa: F811
         pg.goto(base + "/conversations/c1.html")
         assert pg.locator(".copy-msg").count() == 6
         pg.locator(".message-human .copy-msg").first.click()
-        pg.wait_for_timeout(200)
+        pg.wait_for_function("navigator.clipboard.readText().then(t => t.length > 0)")
         assert pg.evaluate("navigator.clipboard.readText()") == "Calculer $\\int_0^1 x^2\\,dx$ **vite**"
         assert "copied" in pg.locator(".message-human .copy-msg").first.get_attribute("class")
 
         def top(i: int) -> float:
             return pg.locator(".messages > .message-human").nth(i).evaluate("e => e.getBoundingClientRect().top")
 
+        def arrived(i: int) -> None:  # the end of the smooth scrolling, not a fixed wait (AF-f6)
+            pg.wait_for_function(
+                "i => Math.abs(document.querySelectorAll('.messages > .message-human')[i].getBoundingClientRect().top) < 3",
+                arg=i)
+
         steps = (("ArrowRight", 0), ("ArrowRight", 1), ("ArrowRight", 2), ("ArrowLeft", 1), ("n", 1), ("ArrowLeft", 0))
         for key, i in steps:  # first: the first message to the top; N: not a key any more
             pg.keyboard.press(key)
-            pg.wait_for_timeout(900)  # smooth scrolling
-            assert abs(top(i)) < 3, (key, i)
+            arrived(i)
         pg.click('#page-nav [data-go="next"]')  # the Next / Back buttons
-        pg.wait_for_timeout(900)
-        assert abs(top(1)) < 3
+        arrived(1)
         pg.click('#page-nav [data-go="back"]')
-        pg.wait_for_timeout(900)
-        assert abs(top(0)) < 3
+        arrived(0)
 
         assert pg.get_attribute('#page-nav [data-go="next"]', "title") == "Votre message suivant '6'"
         assert pg.get_attribute('#page-nav [data-go="top"]', "title") == "Haut de page '7'"
 
         def numpad5(key: str) -> None:  # 5 of the numeric keypad, off ("Clear") or on ("5")
             pg.evaluate("k => document.dispatchEvent(new KeyboardEvent('keydown', {key: k, code: 'Numpad5', bubbles: true}))", key)
-            pg.wait_for_timeout(400)
 
         middle = pg.evaluate("Math.round((document.documentElement.scrollHeight - innerHeight) / 2)")
-        before = pg.evaluate("scrollY")
+        pg.wait_for_function("new Promise(r => { const y = scrollY; setTimeout(() => r(scrollY === y), 150); })")
+        before = pg.evaluate("scrollY")  # settled (the arrival above may still nudge a pixel or two)
         numpad5("5")  # keypad on: the digit is left alone
+        pg.wait_for_timeout(300)
         assert pg.evaluate("scrollY") == before
         numpad5("Clear")
-        assert abs(pg.evaluate("scrollY") - middle) < 3
+        pg.wait_for_function("m => Math.abs(scrollY - m) < 3", arg=middle)
+        # the jump keeps aiming until it settles: wait for the real end before moving (its aim would pull back)
+        pg.wait_for_function("new Promise(r => { const y = scrollY; setTimeout(() => r(scrollY === y), 150); })")
         pg.evaluate("scrollTo(0, 0)")
 
         y0 = pg.evaluate("scrollY")  # slow continuous scrolling
         pg.click('#page-nav [data-go="scroll"]')
         pg.wait_for_timeout(1000)
         y1 = pg.evaluate("scrollY")
-        assert 15 < y1 - y0 < 60  # speed 3: 32 px/s
+        assert 15 < y1 - y0 < 60  # speed 5: 32 px/s
         pg.keyboard.press("+")
         pg.keyboard.press("+")
-        assert pg.inner_text("#nav-speed") == "Vitesse 5 / 7"
+        assert pg.inner_text("#nav-speed") == "Vitesse 7 / 9"
         pg.wait_for_timeout(1000)
         y2 = pg.evaluate("scrollY")
-        assert 50 < y2 - y1 < 95  # speed 5: 70 px/s
+        assert 50 < y2 - y1 < 95  # speed 7: 70 px/s
         pg.keyboard.press("Escape")
-        pg.wait_for_timeout(300)
+        pg.wait_for_timeout(150)
         y3 = pg.evaluate("scrollY")
-        pg.wait_for_timeout(500)
+        pg.wait_for_timeout(400)
         assert pg.evaluate("scrollY") == y3 and pg.get_attribute('#page-nav [data-go="scroll"]', "aria-pressed") == "false"
         pg.reload()
         pg.click('#page-nav [data-go="scroll"]')
-        assert pg.inner_text("#nav-speed") == "Vitesse 5 / 7"  # speed kept
+        assert pg.inner_text("#nav-speed") == "Vitesse 7 / 9"  # speed kept
         pg.click('#page-nav [data-go="scroll"]')
         pg.evaluate("scrollTo(0, 0)")
         pg.keyboard.press("m")  # hides all the answers
@@ -149,3 +155,93 @@ def test_copy_message_and_keys(tmp_path: Path, page) -> None:  # noqa: F811
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_theme_music_and_labels(tmp_path: Path, page) -> None:  # noqa: F811
+    pg = page
+    site = _site(tmp_path)
+    pg.goto((site / "conversations" / "c1.html").as_uri())
+    # "Moi" / "Claude" before the date of each message
+    assert pg.locator(".message-human .message-who").first.inner_text() == "Moi"
+    assert pg.locator(".message-assistant .message-who").first.text_content() == "Claude"
+    # a short page: the theme and the music work, the scrolling buttons stay in place, greyed
+    assert pg.locator('#page-nav [data-go="theme"]').is_visible()
+    assert pg.locator('#page-nav [data-go="music"]').is_visible()
+    top = pg.locator('#page-nav [data-go="top"]')
+    # (22/11) greyed but its title shown on hover: a click does nothing (nav.js)
+    assert top.is_visible() and top.evaluate("e => getComputedStyle(e).opacity") == "0.35"
+    pg.evaluate("window.scrollTo(0, 0)")
+    pg.click('#page-nav [data-go="middle"]')  # (top: disabled at the top of the page)
+    assert pg.evaluate("window.scrollY") == 0
+    theme = '#page-nav [data-go="theme"]'
+    bg = "getComputedStyle(document.documentElement).backgroundColor"
+    assert pg.get_attribute(theme, "title") == "Thème : système" and pg.evaluate("document.documentElement.dataset.theme") == "light"  # the system (light here), 14/11
+    light = pg.evaluate(bg)
+    pg.click(theme)
+    assert pg.get_attribute(theme, "title") == "Thème : clair" and pg.evaluate(bg) == light
+    pg.click(theme)
+    assert pg.get_attribute(theme, "title") == "Thème : sombre" and pg.evaluate(bg) != light  # counter-check: really dark
+    pg.reload()
+    assert pg.evaluate("document.documentElement.dataset.theme") == "dark" and pg.get_attribute(theme, "data-mode") == "dark"
+    pg.click(theme)  # back to the system's
+    assert pg.evaluate("document.documentElement.dataset.theme") == "light" and pg.evaluate(bg) == light
+    # the music: on / off, volume by the wheel or + / - over the note, kept
+    music = '#page-nav [data-go="music"]'
+    pg.click(music)
+    assert pg.get_attribute(music, "aria-pressed") == "true" and pg.get_attribute(music, "title").startswith("Couper")
+    pg.hover(music)
+    pg.mouse.wheel(0, -100)
+    assert pg.inner_text("#nav-volume") == "Volume 4 / 7"
+    pg.keyboard.press("-")
+    pg.keyboard.press("-")
+    assert pg.inner_text("#nav-volume") == "Volume 2 / 7"
+    pg.click(music)
+    assert pg.get_attribute(music, "aria-pressed") == "false"
+    pg.reload()
+    pg.hover(music)
+    pg.keyboard.press("+")
+    assert pg.inner_text("#nav-volume") == "Volume 3 / 7"  # kept: 2 + 1
+    # the wheel over the play button changes the speed of the scrolling
+    pg.evaluate("document.body.style.minHeight = '5000px'")
+    pg.wait_for_timeout(200)
+    pg.hover('#page-nav [data-go="scroll"]')
+    pg.mouse.wheel(0, -100)
+    assert pg.inner_text("#nav-speed") == "Vitesse 6 / 9"
+    assert not pg.errors
+
+
+def test_index_frame_and_buttons(tmp_path: Path, page) -> None:  # noqa: F811
+    pg = page
+    site = _site(tmp_path)
+    html = (site / "index.html").read_text(encoding="utf-8")
+    assert "dl-system" not in html and "(dossier du système)" not in html
+    frame = pg.locator(".filter-frame")
+    pg.goto((site / "index.html").as_uri())
+    pg.click("#tab-filters")  # 14/11: the filters in their tab
+    # one frame: both search boxes and the sort menu, rows split by a thin line
+    for el in ("#search", "#content-search", "#sort-by"):
+        assert frame.locator(el).count() == 1, el
+    assert pg.locator(".filter-row").nth(1).evaluate("e => getComputedStyle(e).borderTopStyle") == "solid"
+    assert pg.locator('#page-nav [data-go="theme"]').is_visible()  # also on the index
+    assert pg.locator('#page-nav [data-go="find"]').count() == 0  # the index has its own search
+    pg.goto((site / "conversations" / "c1.html").as_uri())
+    # the way back to the index: the round button "Vers le sommaire" (C1), no longer a link at the top
+    assert pg.locator(".back-link").count() == 0 and pg.locator('#page-nav [data-go="index"]').is_visible()
+    assert not pg.errors
+
+
+def test_print_ink(tmp_path: Path, page) -> None:  # noqa: F811
+    """Printing (11/11): bubbles without fill, Claude's frame thin black, notes in black, even in the dark theme."""
+    pg = page
+    pg.goto((_site(tmp_path) / "conversations" / "c1.html").as_uri())
+    pg.evaluate("""() => { document.documentElement.setAttribute('data-theme', 'dark');
+      const n = document.createElement('div'); n.className = 'cev-note'; n.id = 'n';
+      n.innerHTML = '<span class="cev-note-label">Note</span><div class="cev-note-text">Texte</div>';
+      document.querySelector('.message-assistant').appendChild(n); }""")
+    style = "(s) => { const e = document.querySelector(s), c = getComputedStyle(e); return [c.backgroundColor, c.borderTopColor, c.color]; }"
+    pg.emulate_media(media="print")
+    human, claude = pg.evaluate(style, ".message-human .message-bubble"), pg.evaluate(style, ".message-assistant .message-bubble")
+    assert human[0] == claude[0] == "rgba(0, 0, 0, 0)"
+    assert claude[1] == "rgb(0, 0, 0)" and human[1] != "rgb(0, 0, 0)"   # yours keeps its blue frame
+    assert pg.evaluate(style, "#n .cev-note-text")[2] == "rgb(0, 0, 0)"
+    assert pg.errors == []

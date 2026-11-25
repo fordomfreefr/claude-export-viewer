@@ -43,6 +43,9 @@ def test_rename_merge_and_delete(tmp_path: Path) -> None:
     assert s == {"topics": ["math", "Médecine"], "assign": {"c1": "math", "c2": "math", "c3": "Médecine"}}
     s = change(tmp_path, action="delete", topic="MATH")
     assert s == {"topics": ["Médecine"], "assign": {"c3": "Médecine"}}
+    s = change(tmp_path, action="create", topic="  Physique  ")  # no conversation yet
+    assert s == {"topics": ["Médecine", "Physique"], "assign": {"c3": "Médecine"}}
+    assert change(tmp_path, action="create", topic="MÉDECINE") == s  # an existing name: unchanged
 
 
 @pytest.mark.parametrize("request_, key", [
@@ -53,6 +56,7 @@ def test_rename_merge_and_delete(tmp_path: Path) -> None:
     ({"action": "rename", "topic": "absente", "name": "y"}, "web.topics.unknown_topic"),
     ({"action": "rename", "topic": "math", "name": ""}, "web.topics.bad_name"),
     ({"action": "delete", "topic": "absente"}, "web.topics.unknown_topic"),
+    ({"action": "create", "topic": " "}, "web.topics.bad_name"),
     ({"action": "effacer-tout"}, "server.bad_request"),
 ])
 def test_refused_changes_leave_everything_unchanged(tmp_path: Path, request_, key) -> None:

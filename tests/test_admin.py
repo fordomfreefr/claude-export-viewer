@@ -37,7 +37,9 @@ def setup(tmp: Path):
     dl.mkdir()
     server = make_server(site, 0, launcher=prog / "claude-export-viewer.py")
     server.ctx.downloads = lambda: dl
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    # (closed once stopped, as serve() does: a stopped server then refuses at once instead of letting the
+    # callers wait for an answer, 15/11)
+    threading.Thread(target=lambda: (server.serve_forever(), server.server_close()), daemon=True).start()
     return site, prog, dl, server
 
 
@@ -101,7 +103,7 @@ def test_import_without_manifest_explains_what_to_do(tmp_path: Path) -> None:
             '2. Il sera envoyé un premier e-mail d\'information "Votre exportation de données est en cours."',
             '3. Quand l\'e-mail arrive "Vos données sont prêtes à être téléchargées", '
             "cliquez sur son lien pour télécharger le manifeste.",
-            "4. Revenez ici et cliquez de nouveau sur « Importer un nouveau manifeste ».",
+            "4. Revenez ici et cliquez de nouveau sur « Importer un export ».",
         ]
     finally:
         server.shutdown()
@@ -170,7 +172,7 @@ def test_desktop_icon_files(tmp_path: Path) -> None:
     menu = home / ".local/share/applications/claude-export-viewer.desktop"
     assert menu in written and (bureau / "claude-export-viewer.desktop") in written
     text = menu.read_text(encoding="utf-8")
-    assert "Name=Claude Archives" in text and "Name[fr]=Archives Claude" in text
+    assert "Name=Claude Library" in text and "Name[fr]=Bibliothèque Claude" in text
     assert f'"{launcher.resolve()}" "-o" "{site.resolve()}" "--ouvrir"' in text
     icon = home / ".local/share/icons/hicolor/scalable/apps/claude-export-viewer.svg"
     assert icon.is_file() and f"Icon={icon}" in text
@@ -181,7 +183,7 @@ def test_index_has_only_the_import_button(tmp_path: Path) -> None:
     site, prog, dl, server = setup(tmp_path)
     server.shutdown()
     index = (site / "index.html").read_text(encoding="utf-8")
-    assert ">Importer un nouveau manifeste</span></button>" in index
+    assert 'id="admin-import"' in index and "<b>Importer un export</b>" in index  # 14/11: the frame of the import
     assert "admin-update" not in index and "Mettre à jour le programme" not in index
     assert 'id="admin-close"' in index and 'id="admin-panel"' in index
     js = (site / "admin.js").read_text(encoding="utf-8")

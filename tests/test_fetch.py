@@ -96,7 +96,8 @@ def test_already_downloaded_files_are_found_and_stored(tmp_path: Path) -> None:
     make_zip(dl / "light_metadata-000.zip", "light_metadata")
 
     browser = FakeBrowser(dl)
-    res = fetch.fetch_export(manifest, tmp_path / "site", opener=browser, folders=[dl], timeout=2, poll=0.05, say=silent)
+    res = fetch.fetch_export(manifest, tmp_path / "site", categories=fetch.USED_CATEGORIES, opener=browser, folders=[dl],
+                             timeout=2, poll=0.05, say=silent)
     assert browser.opened == []
     assert res.missing == []
     stored = sorted(p.name for p in res.export_dir.iterdir())
@@ -111,7 +112,8 @@ def test_missing_files_are_opened_one_by_one_and_awaited(tmp_path: Path) -> None
     dl.mkdir()
     manifest = fetch.read_manifest(make_manifest(dl))
     browser = FakeBrowser(dl, delay=0.3)
-    res = fetch.fetch_export(manifest, tmp_path / "site", opener=browser, folders=[dl], timeout=5, poll=0.05, say=silent)
+    res = fetch.fetch_export(manifest, tmp_path / "site", categories=fetch.USED_CATEGORIES, opener=browser, folders=[dl],
+                             timeout=5, poll=0.05, say=silent)
     assert [u.rsplit("/", 1)[-1] for u in browser.opened] == ["conversations", "light_metadata", "projects"]
     assert res.missing == []
     assert (res.export_dir / "conversations-000.zip").is_file()
@@ -131,12 +133,13 @@ def test_firefox_style_placeholder_is_not_taken_too_early(tmp_path: Path) -> Non
         assert "conversations.json" in z.namelist()
 
 
-def test_all_categories_on_request(tmp_path: Path) -> None:
+def test_every_category_by_default(tmp_path: Path) -> None:
+    """An archive keeps all that the export gives, even what CEV does not show yet (08/11)."""
     dl = tmp_path / "dl"
     dl.mkdir()
     manifest = fetch.read_manifest(make_manifest(dl))
     browser = FakeBrowser(dl, delay=0.05)
-    res = fetch.fetch_export(manifest, tmp_path / "site", categories=CATEGORIES, opener=browser,
+    res = fetch.fetch_export(manifest, tmp_path / "site", opener=browser,
                              folders=[dl], timeout=5, poll=0.05, say=silent)
     assert len(browser.opened) == 7 and res.missing == []
     assert browser.opened[0].endswith("/conversations")
@@ -185,13 +188,14 @@ def test_latest_manifest_is_chosen(tmp_path: Path) -> None:
 
 
 def run_cli(args: list[str], browser) -> None:
-    saved = (fetch.browser_opener, fetch.download_folders)
+    saved = (fetch.browser_opener, fetch.download_folders, fetch.POLL)
     fetch.browser_opener = lambda command: browser
     fetch.download_folders = lambda manifest, extra=(): [manifest.path.parent, *extra]
+    fetch.POLL = 0.05  # AF-f6: the real second between two looks has nothing to prove here
     try:
         main(args)
     finally:
-        fetch.browser_opener, fetch.download_folders = saved
+        fetch.browser_opener, fetch.download_folders, fetch.POLL = saved
 
 
 def test_one_command_downloads_imports_and_opens(tmp_path: Path, capsys) -> None:
@@ -254,8 +258,8 @@ def test_manual_mode_prints_links_and_never_opens_the_browser(tmp_path: Path) ->
             user(msg.strip())
 
     opened = []
-    res = fetch.fetch_export(manifest, tmp_path / "site", opener=opened.append, folders=[dl],
-                             timeout=5, poll=0.05, say=say, manual=True)
+    res = fetch.fetch_export(manifest, tmp_path / "site", categories=fetch.USED_CATEGORIES, opener=opened.append,
+                             folders=[dl], timeout=5, poll=0.05, say=say, manual=True)
     assert opened == []  # nothing opened by the program
     assert res.missing == []
     out = "\n".join(lines)

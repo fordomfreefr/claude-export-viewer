@@ -4,8 +4,8 @@
  * (data-i18n="key", data-i18n-args='{…}', data-i18n-attr="title:key"); dates are
  * <time data-fmt="date|datetime|day">. This script rewrites them in the chosen
  * language: the one picked in the index menu (remembered by the browser), or
- * else the browser's language, or else English. The texts of every language
- * come from i18n-data.js (window.CEV_I18N), written next to this file.
+ * else the browser's language, or else English. The texts come from i18n/<lang>.js, loaded by i18n-data.js
+ * (window.CEV_I18N) for the language shown and English only (P10, 11/11).
  */
 (function () {
   "use strict";
@@ -79,12 +79,23 @@
     }
   }
 
+  // A number of tokens, short (as tokens.short): 850, 4,2 k, 480 k, 1,4 M
+  function formatTokens(n, lang) {
+    var unit = "", v = n;
+    if (n >= 999500) { v = n / 1e6; unit = " M"; } else if (n >= 1000) { v = n / 1000; unit = " k"; }
+    v = unit && v < 10 ? Math.round(v * 10) / 10 : Math.round(v);
+    var text;
+    try { text = new Intl.NumberFormat(lang, { maximumFractionDigits: 1, useGrouping: false }).format(v); } catch (e) { text = String(v); }
+    return text + unit;
+  }
+
   function show(value, lang) {
     if (value && typeof value === "object") {
       if (value.$datetime) { return formatDate(value.$datetime, "datetime", lang); }
       if (value.$date) { return formatDate(value.$date, "date", lang); }
       if (value.$day) { return formatDate(value.$day, "day", lang); }
       if (value.$num !== undefined) { return formatNumber(value.$num, lang); }
+      if (value.$tok !== undefined) { return formatTokens(value.$tok, lang); }
     }
     return value;
   }
@@ -105,10 +116,20 @@
     try { return JSON.parse(a); } catch (e) { return null; }
   }
 
+  // Text with the markers [v]…[/v] (verb) and [b]…[/b] (bold), escaped first (same as i18n.rich).
+  function rich(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .split("[v]").join('<span class="hint-verb">').split("[/v]").join("</span>")
+      .split("[b]").join("<b>").split("[/b]").join("</b>");
+  }
+
   function apply(root) {
     root = root || document;
     Array.prototype.forEach.call(root.querySelectorAll("[data-i18n]"), function (el) {
       el.textContent = t(el.getAttribute("data-i18n"), argsOf(el));
+    });
+    Array.prototype.forEach.call(root.querySelectorAll("[data-i18n-rich]"), function (el) {
+      el.innerHTML = rich(t(el.getAttribute("data-i18n-rich"), argsOf(el)));
     });
     Array.prototype.forEach.call(root.querySelectorAll("[data-i18n-attr]"), function (el) {
       el.getAttribute("data-i18n-attr").split(";").forEach(function (pair) {
@@ -163,6 +184,13 @@
       select.appendChild(option);
     });
     select.value = current;
-    select.addEventListener("change", function () { setLanguage(select.value, true); });
+    select.addEventListener("change", function () {
+      var code = select.value;
+      if (DATA.texts[code]) { setLanguage(code, true); return; }
+      var s = document.createElement("script");  // its texts, then the page in it (i18n-data.js loaded only two)
+      s.src = (DATA.base || "") + "i18n/" + code + ".js";
+      s.onload = s.onerror = function () { setLanguage(code, true); };
+      document.head.appendChild(s);
+    });
   }
 })();

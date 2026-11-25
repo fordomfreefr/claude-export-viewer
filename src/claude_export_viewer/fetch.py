@@ -35,7 +35,8 @@ from urllib.parse import urlparse
 from . import system
 from .i18n import t
 
-DEFAULT_CATEGORIES = ("conversations", "projects", "light_metadata")
+# The categories CEV reads; every category of the manifest is downloaded and kept in the archive (08/11).
+USED_CATEGORIES = ("conversations", "projects", "light_metadata")
 LINK_LIFETIME = timedelta(hours=24)
 _PARTIAL_SUFFIXES = (".crdownload", ".part", ".download", ".partial")
 
@@ -184,15 +185,19 @@ def find_downloaded(mf: ManifestFile, folders: Iterable[Path], not_before: datet
     return max(found)[1] if found else None
 
 
+POLL = 1.0  # seconds between two looks at the downloads folder (the tests shorten it)
+
+
 def wait_for_download(
     mf: ManifestFile,
     folders: Iterable[Path],
     since: datetime,
     timeout: float,
-    poll: float = 1.0,
+    poll: float | None = None,
 ) -> Path | None:
     """Wait until a complete copy of ``mf`` appears (its size must stay stable between two checks)."""
     folders = list(folders)
+    poll = POLL if poll is None else poll
     deadline = time.monotonic() + timeout
     last: dict[Path, int] = {}
     while time.monotonic() < deadline:
@@ -228,11 +233,11 @@ class FetchResult:
 def fetch_export(
     manifest: Manifest,
     site_dir: Path,
-    categories: Iterable[str] = DEFAULT_CATEGORIES,
+    categories: Iterable[str] | None = None,
     opener: Callable[[str], None] | None = None,
     folders: list[Path] | None = None,
     timeout: float = 300,
-    poll: float = 1.0,
+    poll: float | None = None,
     say: Callable[[str], None] = print,
     manual: bool = False,
 ) -> FetchResult:
@@ -247,7 +252,7 @@ def fetch_export(
     folders = folders if folders is not None else download_folders(manifest)
     export_dir = Path(site_dir) / "archive" / "exports" / manifest.folder_name
     result = FetchResult(export_dir)
-    wanted = [f for f in manifest.files if f.category in set(categories)]
+    wanted = [f for f in manifest.files if categories is None or f.category in set(categories)]
     wanted.sort(key=lambda f: f.category != "conversations")  # the essential one first
     search = [export_dir, *folders]
 

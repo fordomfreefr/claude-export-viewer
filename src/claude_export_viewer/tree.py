@@ -68,10 +68,68 @@ class Item:
     last_seen: str | None  # set for messages absent from the latest export
     payload: Any
     children: list[Item] = field(default_factory=list)
+    forced: bool = False  # the end of the main branch, whatever comes after (one part of a very long conversation)
 
     @property
     def gone(self) -> bool:
         return self.last_seen is not None
+
+
+_ARTIFACT_FIELDS = ("type", "title", "language")
+
+
+def _inherit_artifact_fields(items: list[Item]) -> None:
+    """A ``rewrite`` / ``update`` of an artifact holds only its id and content: it takes the type, title
+    and language of the earlier blocks with the same id (in time order), so that code stays code. The
+    raw messages are copied where a field is added, never changed in place."""
+    known: dict[str, dict[str, Any]] = {}
+    for item in sorted(items, key=lambda it: (it.created, it.order)):
+        msg = item.payload
+        blocks = msg.get("content") if isinstance(msg, dict) else None
+        if not isinstance(blocks, list):
+            continue
+        new_blocks, changed = [], False
+        for b in blocks:
+            inp = b.get("input") if isinstance(b, dict) and b.get("type") == "tool_use" \
+                and b.get("name") == "artifacts" else None
+            if isinstance(inp, dict) and isinstance(inp.get("id"), str) and inp["id"]:
+                seen = known.setdefault(inp["id"], {})
+                missing = {k: seen[k] for k in _ARTIFACT_FIELDS if not inp.get(k) and seen.get(k)}
+                seen.update({k: inp[k] for k in _ARTIFACT_FIELDS if inp.get(k)})
+                if missing:
+                    b, changed = {**b, "input": {**inp, **missing}}, True
+            new_blocks.append(b)
+        if changed:
+            item.payload = {**msg, "content": new_blocks}
+
+
+def _move_injected(items: list[Item]) -> None:
+    """claude.ai files the instructions it adds (``injected_prompt_block``) in the user's message: they
+    go to each reply of Claude to that message, after its opening thinking (they stay where they are
+    without a reply).
+    The raw messages are copied, never changed in place."""
+    replies: dict[str, list[Item]] = {}
+    for it in items:
+        if isinstance(it.payload, dict) and it.payload.get("sender") == "assistant" and it.parent:
+            replies.setdefault(it.parent, []).append(it)
+    for it in items:
+        msg = it.payload
+        if not isinstance(msg, dict) or msg.get("sender") != "human" or not replies.get(it.key):
+            continue
+        blocks = msg.get("content")
+        if not isinstance(blocks, list):
+            continue
+        injected = [b for b in blocks if isinstance(b, dict) and b.get("type") == "injected_prompt_block"]
+        if not injected:
+            continue
+        it.payload = {**msg, "content": [b for b in blocks if b not in injected]}
+        for r in replies[it.key]:
+            content = r.payload.get("content")
+            content = content if isinstance(content, list) else []
+            # after the thinking that opens the reply, which stays outside the frame "Ressources"
+            n = next((i for i, b in enumerate(content) if not (isinstance(b, dict) and b.get("type") == "thinking")),
+                     len(content))
+            r.payload = {**r.payload, "content": content[:n] + injected + content[n:]}
 
 
 def items_from_raw(raw: dict[str, Any]) -> list[Item]:
@@ -88,6 +146,8 @@ def items_from_raw(raw: dict[str, Any]) -> list[Item]:
         parent = m.get("parent_message_uuid") or m.get(LINEAR_PARENT) or None
         items.append(Item(message_key(m), parent, str(m.get("created_at") or ""), len(items),
                           str(m.get(LAST_SEEN) or "?"), m))
+    _inherit_artifact_fields(items)
+    _move_injected(items)
     return items
 
 
@@ -142,6 +202,12 @@ def _leaves(root: Item) -> list[Item]:
 
 
 def _best_leaf(roots: list[Item]) -> Item | None:
+    stack = list(roots)
+    while stack:  # a part of a very long conversation ends its main branch where the next part begins
+        n = stack.pop()
+        if n.forced:
+            return n
+        stack.extend(n.children)
     leaves = [leaf for r in roots for leaf in _leaves(r)]
     if not leaves:
         return None
@@ -150,7 +216,14 @@ def _best_leaf(roots: list[Item]) -> Item | None:
 
 
 def _root_of(roots: list[Item], leaf: Item) -> Item:
-    return next(r for r in roots if any(x is leaf for x in _leaves(r)))
+    for r in roots:
+        stack = [r]
+        while stack:
+            n = stack.pop()
+            if n is leaf:
+                return r
+            stack.extend(n.children)
+    raise ValueError("leaf not in the tree")
 
 
 def _path(root: Item, leaf: Item) -> list[Item]:
@@ -189,6 +262,89 @@ class Branch:
     size: int
     removed: bool  # every message of the branch is gone from claude.ai
     content: list[str]
+
+
+def skeleton(msg: dict[str, Any], extra: bool = False) -> tuple[str, ...]:
+    """What main_path needs of a message (step 3c of the reading in pieces, 21/11): its key, parent, date and, for a
+    message kept from an earlier export, the date of the last export holding it; never its content."""
+    if extra:
+        return (message_key(msg), msg.get("parent_message_uuid") or msg.get(LINEAR_PARENT) or None,
+                str(msg.get("created_at") or ""), str(msg.get(LAST_SEEN) or "?"))
+    return (message_key(msg), msg.get("parent_message_uuid") or None, str(msg.get("created_at") or ""))
+
+
+def count_main(current: list[tuple[str, ...]], extras: list[tuple[str, ...]]) -> int:
+    """len(main_path(items_from_raw(raw))) from the skeletons of the messages (the dict ones, in their order) and of
+    the extra messages: the same items, without their contents (main_path does not look at them)."""
+    return len(main_path(skeleton_items(current, extras)))
+
+
+def skeleton_items(current: list[tuple[str, ...]], extras: list[tuple[str, ...]]) -> list[Item]:
+    """The items of items_from_raw, without contents (payload None), from the skeletons."""
+    with_parents = any(p for _, p, _ in current)
+    items: list[Item] = []
+    previous: str | None = None
+    for k, p, created in current:
+        items.append(Item(k, p if with_parents else previous, created, len(items), None, None))
+        previous = k
+    for k, p, created, last_seen in extras:
+        items.append(Item(k, p, created, len(items), last_seen, None))
+    return items
+
+
+@dataclass
+class PartPlan:
+    """A very long conversation cut into parts (step 4 of the reading in pieces, 21/11): ``ranges`` the slices of the
+    main branch, ``part_of`` the part of every message (key), ``path`` the keys of the main branch."""
+    ranges: list[tuple[int, int]]
+    part_of: dict[str, int]
+    path: list[str]
+
+
+def plan_parts(items: list[Item], weight: dict[str, int], human: set[str], budget: int) -> PartPlan:
+    """Cut the conversation along its main branch into parts of about ``budget`` (the sizes in ``weight``): each
+    message of the main branch takes the branches that leave from it (they stay in its part, as frames after it),
+    the trees apart from the main one go to the first part. A part ends before a message of yours (``human``) once
+    it holds ``budget`` (at most twice ``budget`` waiting for one), so that a question and its answer stay
+    together."""
+    roots = _link(items)
+    leaf = _best_leaf(roots)
+    if leaf is None:
+        return PartPlan([], {}, [])
+    main_root = _root_of(roots, leaf)
+    path = _path(main_root, leaf)
+    on_path = {id(n) for n in path}
+
+    def subtree(node: Item) -> list[str]:
+        out, stack = [], [node]
+        while stack:
+            n = stack.pop()
+            out.append(n.key)
+            stack.extend(n.children)
+        return out
+
+    first = [k for r in roots if r is not main_root for k in subtree(r)]
+    blocks: list[list[str]] = []
+    for node in path:
+        keys = [node.key]
+        for c in node.children:
+            if id(c) not in on_path:
+                keys += subtree(c)
+        blocks.append(keys)
+    ranges: list[tuple[int, int]] = []
+    start, acc = 0, sum(weight.get(k, 0) for k in first)
+    for i, keys in enumerate(blocks):
+        if i > start and acc >= budget and (path[i].key in human or acc >= 2 * budget):
+            ranges.append((start, i))
+            start, acc = i, 0
+        acc += sum(weight.get(k, 0) for k in keys)
+    ranges.append((start, len(path)))
+    part_of = {k: 0 for k in first}
+    for p, (a, b) in enumerate(ranges):
+        for i in range(a, b):
+            for k in blocks[i]:
+                part_of[k] = p
+    return PartPlan(ranges, part_of, [n.key for n in path])
 
 
 def main_path(items: list[Item]) -> list[Item]:

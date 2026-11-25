@@ -42,7 +42,7 @@ def test_main_thread_text_artifacts_and_attachments() -> None:
     md = markdown()
     assert md.startswith("# Estimation : taux/an ?\n")
     assert "**Vous** — " in md and "**Claude** — " in md
-    assert "Estime $\\alpha$" in md  # formulas kept as LaTeX
+    assert "Estime \\$\\\\alpha\\$" in md  # the user's text as typed (A6): no formula, as on claude.ai
     assert "```python\nprint('ok')\n```" in md
     assert "**Artefact : Module**" in md and "```basic\nFunction F()\nEnd Function\n```" in md
     assert "*Pièces jointes : taux.ods*" in md
@@ -92,7 +92,7 @@ def test_archived_page_offers_it_too(tmp_path: Path) -> None:
     assert "Première réponse abandonnée" in json.loads(payload)["markdown"]
 
 
-# --- "Inclure les autres versions" unchecked: main thread only ---------------
+# --- "sans les autres versions" checked: main thread only ---------------
 
 
 def test_main_thread_only_leaves_out_other_versions() -> None:
@@ -101,7 +101,7 @@ def test_main_thread_only_leaves_out_other_versions() -> None:
     assert "Première réponse abandonnée" not in main and "Autre version" not in main and "\n>" not in main
     assert "fil principal seulement" in main and "fil principal seulement" not in full
     # everything of the main thread is still there, in the same order
-    for kept in ("Estime $\\alpha$", "Voici :", "**Artefact : Module**", "taux.ods"):
+    for kept in ("Estime \\$\\\\alpha\\$", "Voici :", "**Artefact : Module**", "taux.ods"):
         assert kept in main
     assert main.index("Estime") < main.index("Voici :")
 
@@ -128,8 +128,8 @@ def test_same_items_can_be_rendered_twice() -> None:
 def test_page_embeds_both_variants_and_the_checkbox(tmp_path: Path) -> None:
     build_site(ExportData(conversations=[convo()]), tmp_path)
     page = (tmp_path / "conversations" / "c.html").read_text(encoding="utf-8")
-    assert '<input type="checkbox" id="export-versions" checked>' in page
-    assert "Inclure les autres versions et les parties supprimées" in page
+    assert '<input type="checkbox" id="export-main">' in page
+    assert "sans les autres versions et suppressions" in page
     payload = json.loads(re.search(r'id="cev-markdown">(.*?)</script>', page, re.S).group(1))
     assert "Première réponse abandonnée" in payload["markdown"]
     assert "Première réponse abandonnée" not in payload["markdown_main"]

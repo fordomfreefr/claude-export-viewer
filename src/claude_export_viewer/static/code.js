@@ -37,14 +37,45 @@
   }
 
   function flash(button, label, cls) {
-    button.textContent = label;
+    var text = button.querySelector(".copy-label") || button;  // (22/11: the icon stays)
+    text.textContent = label;
     button.classList.add(cls);
     clearTimeout(button._timer);
     button._timer = setTimeout(function () {
-      button.textContent = CEV.t("web.copy");
+      text.textContent = CEV.t("web.copy");
       button.classList.remove(cls);
     }, 1600);
   }
+
+  // Icon of a file handed over by Claude: copies the whole file (the code frame under it).
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest(".copy-file") : null;
+    var box = button ? button.closest(".created-file") : null;
+    var code = box ? box.querySelector(".code-block pre code") : null;
+    if (!code) {
+      return;
+    }
+    var title = CEV.t("web.created.copy");
+    copyText(code.textContent.replace(/\n$/, "")).then(
+      function () { button.classList.add("copied"); button.title = CEV.t("web.copied"); },
+      function () { button.classList.add("copy-failed"); button.title = CEV.t("web.copy_failed"); }
+    ).then(function () {
+      clearTimeout(button._timer);
+      button._timer = setTimeout(function () {
+        button.classList.remove("copied", "copy-failed");
+        button.title = title;
+      }, 1600);
+    });
+  });
+
+  // Long frames (renderer.PREVIEW_LINES): a click on the header, except "Copy", opens or closes them.
+  document.addEventListener("click", function (event) {
+    var head = event.target.closest ? event.target.closest(".cev-long > .code-header, .cev-long > .artifact-header") : null;
+    if (!head || event.target.closest(".copy-btn, .run-btn")) {
+      return;
+    }
+    head.parentNode.classList.toggle("cev-open");
+  });
 
   document.addEventListener("click", function (event) {
     var button = event.target.closest ? event.target.closest(".copy-btn") : null;

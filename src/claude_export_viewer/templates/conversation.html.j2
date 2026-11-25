@@ -3,41 +3,121 @@
 {% block title_attrs %}{% if not conversation.name %} data-i18n="web.untitled"{% endif %}{% endblock %}
 {% block title %}{{ conversation.name or t("web.untitled") }}{% endblock %}
 {% block root %}../{% endblock %}
-{% block head_extra %}{% if has_math %}<link rel="stylesheet" href="katex/katex.min.css">{% endif %}{% endblock %}
+{% block head_extra %}{% if has_math %}<link rel="stylesheet" href="katex/katex.min.css">{% endif %}
+  <link rel="stylesheet" href="../plan.css">
+  {#- the view (Lecture / Structure) and "Lignes", before drawing (plan.js; the plan view removed 17/11) #}
+  <script>try { var r = document.documentElement, v = localStorage.getItem("cev-view"), k = localStorage.getItem("cev-read-lines");
+    if (v === "structure") { r.classList.add("cev-structure"); }
+    k = /^(1|3|5|all)$/.test(k || "") ? k : "all"; r.setAttribute("data-read-lines", k);
+    if (k !== "all") { r.classList.add("cev-read-cut"); } } catch (e) { /* no storage */ }</script>{% endblock %}
 
 {% block content %}
-<a href="../index.html" class="back-link">&larr; {{ T("web.back") }}</a>
-
 <div class="convo-header">
   <div class="convo-title">
     <h1>{% if conversation.name %}{{ conversation.name }}{% else %}{{ T("web.untitled") }}{% endif %}</h1>
-    <button type="button" class="fold-all" id="fold-all" aria-pressed="false" {{ attr("title", "web.fold.all_hide") }} hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path class="fold-in" d="M12 3v6M9 6l3 3 3-3M12 21v-6M9 18l3-3 3 3M4 12h16"/><path class="fold-out" d="M12 9V3M9 6l3-3 3 3M12 15v6M9 18l3 3 3-3M4 12h16"/></svg></button>
+    {#- 22/11 (Dom): Lecture / Structure on the line of the title, on the right (plan.js) #}
+  <button type="button" class="plan-chip plan-view" {{ attr("title", "web.plan.view_title") }}>{{ T("web.plan.view") }} <span class="plan-opt" data-v="reading">{{ T("web.plan.reading") }}</span> · <span class="plan-opt" data-v="structure">{{ T("web.plan.structure") }}</span></button>
   </div>
   <div class="meta">
     {% if conversation.created_at %}{{ date(conversation.created_at, true) }} &middot; {% endif %}
-    {{- T("web.messages", n=conversation.chat_messages | length) }}
+    {{- T("web.messages", n=n_total or conversation.chat_messages | length) }}
+    {%- if tokens and tokens.total %} &middot; <span class="tok-count" {{ attr("title", "web.tokens.title", content=Tokens(tokens.content), tools=Tokens(tokens.tools)) }}>{{ T("web.tokens.short", n=Tokens(tokens.total)) }}</span>{% endif %}
     {%- set url = conversation.uuid | claude_url %}
     {%- if url and not deleted_since %}
     <span class="claude-link">&middot; <a href="{{ url }}" target="_blank" rel="noopener"
        {{ attr("title", "web.open_claude_title") }}>{{ T("web.open_claude") }}&nbsp;&#8599;</a></span>
     {%- endif %}
   </div>
+  {#- P3 (11/11): the four frames as tabs on one line, one open at a time (fav-tabs, style.css; favorites.js) #}
+  <div class="fav-tabs">
+  {#- 22/11 (Dom): what was above the messages, in two tabs before those of the annotations (one open at a time,
+     favorites.js): "Bulles" (Masquer / Affichage / Voix) and "Exporter"; each row a group, its title in bold #}
+  <details class="fav-list opt-tab" id="bubbles-tab">
+    <summary>{{ T("web.tab.bubbles") }}</summary>
+    <div class="fav-items opt-panel">
+    <div class="opt-row view-options">
+      <span class="export-label">{{ T("web.hide") }}</span>
+      <div class="opt-body">
+    <label class="view-option" {{ attr("title", "web.hide_resources_title") }}><input type="checkbox" id="hide-resources" checked> {{ T("web.hide_resources") }}</label>
+    <label class="view-option" {{ attr("title", "web.hide_notes_title") }}><input type="checkbox" id="hide-notes"> {{ T("web.hide_notes") }}</label>
+    <label class="view-option" {{ attr("title", "web.hide_titles_title") }}><input type="checkbox" id="hide-titles"> {{ T("web.hide_titles") }}</label>
+    <label class="view-option" {{ attr("title", "web.hide_numbers_title") }}><input type="checkbox" id="hide-numbers"> {{ T("web.hide_numbers") }}</label>
+    <label class="view-option" {{ attr("title", "web.hide_versions_title") }}><input type="checkbox" id="hide-versions"> {{ T("web.hide_versions") }}</label>
+      </div>
+    </div>
+    <div class="opt-row">
+      <span class="export-label">{{ T("web.bubbles.display") }}</span>
+      <div class="opt-body" id="lines-slot"><button type="button" class="plan-chip plan-lines" {{ attr("title", "web.plan.lines_title") }}>{{ T("web.plan.lines") }} <span class="plan-opt" data-v="1">1</span> · <span class="plan-opt" data-v="3">3</span> · <span class="plan-opt" data-v="5">5</span> · <span class="plan-opt" data-v="all">{{ T("web.plan.all") }}</span></button> <span class="opt-note">{{ T("web.bubbles.display_note") }}</span></div>
+    </div>
+    <div class="opt-row opt-voices">
+      <span class="export-label">{{ T("web.bubbles.voices") }}</span>
+      <div class="opt-body" id="voices-slot"><span class="opt-note">{{ T("web.bubbles.voices_note") }}</span></div>
+    </div>
+    </div>
+  </details>
   {% if markdown_json %}
-  <div class="export-bar" id="export-bar" hidden
-       {% if office_key %}data-key="{{ office_key }}" data-cmd-odt="{{ office_commands.odt }}" data-cmd-docx="{{ office_commands.docx }}"{% endif %}>
-    <span class="export-label">{{ T("web.export") }}</span>
+  <details class="fav-list opt-tab" id="export-tab">
+    <summary>{{ T("web.tab.export") }}</summary>
+    <div class="fav-items opt-panel">
+  <div class="export-bar opt-rows" id="export-bar" hidden
+       {% if office_key %}data-key="{{ office_key }}" data-cmd-odt="{{ office_commands.odt }}" data-cmd-docx="{{ office_commands.docx }}" data-cmd-txt="{{ office_commands.txt }}"{% endif %}>
+    <div class="opt-row">
+      <span class="export-label">{{ T("web.export.formats") }}</span>
+      <div class="opt-body">
     <button type="button" id="export-md" class="export-btn" {{ attr("title", "web.export_md_title") }}>.md</button>
     {% if office_key %}
     <button type="button" class="export-btn" data-format="odt" {{ attr("title", "web.export_odt_title") }}>.odt</button>
     <button type="button" class="export-btn" data-format="docx" {{ attr("title", "web.export_docx_title") }}>.docx</button>
+    <button type="button" class="export-btn" data-format="txt" {{ attr("title", "web.export_txt_title") }}>.txt</button>
     {% endif %}
     <button type="button" id="export-pdf" class="export-btn" {{ attr("title", "web.export_pdf_title") }}>.pdf</button>
-    <label class="export-option" {{ attr("title", "web.include_versions_title") }}>
-      <input type="checkbox" id="export-versions" checked> {{ T("web.include_versions") }}
+      </div>
+    </div>
+    <div class="opt-row">
+      <span class="export-label">{{ T("web.export.options") }}</span>
+      <div class="opt-body">
+    {% if office_key %}<label class="export-option" {{ attr("title", "web.export_annotations_title") }} hidden>
+      <input type="checkbox" id="export-annot"> {{ T("web.export_annotations") }}
+    </label>{% endif %}
+    {% if office_key %}<label class="export-option" {{ attr("title", "web.zip.title") }} hidden>
+      <input type="checkbox" id="export-zip"> ZIP
+    </label>{% endif %}
+    {#- 22/11: the same sense as "Masquer" above (checked: without), no longer "Inclure" checked #}
+    <label class="export-option" {{ attr("title", "web.export_main_title") }}>
+      <input type="checkbox" id="export-main"> {{ T("web.export_main") }}
     </label>
-  </div>
-  <div class="export-help" id="export-help" hidden></div>
+      </div>
+    </div>
+    </div>
+    <div class="export-help" id="export-help" hidden></div>
+    </div>
+  </details>
   {% endif %}
+  <details class="fav-list link-list fav-first" id="link-list">
+    <summary>{{ icon("link", 14, "link-icon") }}
+      <span class="fav-label">{{ T("web.links.list", n=0) }}</span>
+      {{ icon("fold", 16, "fold-icon") }}</summary>
+    <ul class="fav-items link-items"></ul>
+  </details>
+  <details class="fav-list" id="fav-list">
+    <summary>{{ icon("star", 14, "fav-icon") }}
+      <span class="fav-label">{{ T("web.fav.list", n=0) }}</span>
+      {{ icon("fold", 16, "fold-icon") }}</summary>
+    <ul class="fav-items" id="fav-items"></ul>
+  </details>
+  <details class="fav-list note-list" id="note-list">
+    <summary>{{ icon("note", 14, "note-icon") }}
+      <span class="fav-label">{{ T("web.note.list", n=0) }}</span>
+      {{ icon("fold", 16, "fold-icon") }}</summary>
+    <ul class="fav-items note-items"></ul>
+  </details>
+  <details class="fav-list title-list" id="title-list">
+    <summary>{{ icon("title", 14, "title-icon") }}
+      <span class="fav-label">{{ T("web.title.list", n=0) }}</span>
+      {{ icon("fold", 16, "fold-icon") }}</summary>
+    <ul class="fav-items title-items"></ul>
+  </details>
+  </div>
 </div>
 {% if deleted_since %}
 <div class="deleted-banner">
@@ -46,24 +126,48 @@
 </div>
 {% endif %}
 
-<div class="messages">
+{#- Lecture / Structure and "Lignes" (plan.js, plan.css) #}
+<div class="plan-bar" id="plan-bar">
+</div>
+{% macro parts_bar() -%}
+{% if part_pages %}<nav class="cev-parts"><span>{{ T("web.parts.label", k=part + 1, n=part_pages | length) }}</span>
+{%- if part > 0 %} <a href="{{ part_pages[part - 1] }}">← {{ T("web.parts.prev") }}</a>{% endif %}
+{%- if part + 1 < part_pages | length %} <a href="{{ part_pages[part + 1] }}">{{ T("web.parts.next") }} →</a>{% endif %}
+<span class="cev-parts-note">{{ T("web.parts.note") }}</span></nav>{% endif %}
+{%- endmacro %}
+{{ parts_bar() }}
+<div class="messages" data-conversation="{{ conversation.uuid }}">
   {% for message_html in rendered_messages %}
   {{ message_html | safe }}
   {% endfor %}
 </div>
+{{ parts_bar() }}
 {% include "_page_nav.html.j2" %}
 {% endblock %}
 
-{% block scripts %}<script defer src="../nav.js"></script>
+{% block scripts %}{% if part_pages %}<script>window.CEV_PARTS = {{ {"map": parts_map, "pages": part_pages, "part": part} | tojson }};</script>
+<script defer src="../parts.js"></script>
+{% endif %}<script defer src="../nav.js"></script>
 <script defer src="../fold.js"></script>
 <script defer src="../query.js"></script>
 <script defer src="../msg.js"></script>
 <script defer src="../files.js"></script>
+<script src="../annotations-data.js"></script>
+<script defer src="../favorites.js"></script>
+<script defer src="../annot.js"></script>
+<script defer src="../links.js"></script>
+<script defer src="../notes.js"></script>
+<script defer src="../marks.js"></script>
+<script defer src="../speak.js"></script>
+<script defer src="../structure.js"></script>
+<script defer src="../plan.js"></script>
 {% if markdown_json %}
 <script type="application/json" id="cev-markdown">{{ markdown_json | safe }}</script>
 <script defer src="../export.js"></script>
 {% endif %}{% if has_code %}
 <script defer src="../code.js"></script>
+<script defer src="../claude-widget.js"></script>
+<script defer src="../run.js"></script>
 {% endif %}{% if has_math %}
 <script defer src="katex/katex.min.js"></script>
 <script defer src="katex/copy-tex.min.js"></script>

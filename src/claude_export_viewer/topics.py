@@ -11,7 +11,10 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from . import jsonfile
 from typing import Any
+
+_one_at_a_time = jsonfile.one_at_a_time()  # reading, changing, writing: one change at a time
 
 FILE = "topics.json"
 DATA_JS = "topics-data.js"
@@ -32,10 +35,7 @@ def _path(site_dir: Path) -> Path:
 
 def load(site_dir: Path) -> dict[str, Any]:
     """{"topics": [names], "assign": {conversation uuid: name}} (cleaned: no unknown name)."""
-    try:
-        data = json.loads(_path(site_dir).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        data = {}
+    data = jsonfile.read(_path(site_dir))
     if not isinstance(data, dict):
         data = {}
     names = [n for n in data.get("topics", []) if isinstance(n, str) and n.strip()] \
@@ -44,6 +44,7 @@ def load(site_dir: Path) -> dict[str, Any]:
     return {"topics": names, "assign": {u: n for u, n in assign.items() if isinstance(u, str) and n in names}}
 
 
+@_one_at_a_time
 def save(site_dir: Path, data: dict[str, Any]) -> None:
     path = _path(site_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -77,6 +78,7 @@ def _find(names: list[str], name: str) -> str | None:
     return next((n for n in names if n.casefold() == folded), None)
 
 
+@_one_at_a_time
 def change(site_dir: Path, request: dict[str, Any], known: set[str]) -> dict[str, Any]:
     """Apply one change and return the new state. ``known`` are the uuids of the archive.
 
@@ -84,6 +86,7 @@ def change(site_dir: Path, request: dict[str, Any], known: set[str]) -> dict[str
                                                             a new name is created)
     {"action": "rename", "topic": old, "name": new}       (into an existing name: merged)
     {"action": "delete", "topic": name}                   (its conversations lose it)
+    {"action": "create", "topic": name}                   (no conversation yet; an existing name: unchanged)
     """
     data = load(site_dir)
     names, assign = data["topics"], data["assign"]
@@ -122,6 +125,10 @@ def change(site_dir: Path, request: dict[str, Any], known: set[str]) -> dict[str
             raise TopicError("web.topics.unknown_topic")
         names.remove(old)
         data["assign"] = {u: n for u, n in assign.items() if n != old}
+    elif action == "create":
+        name = _clean(request.get("topic"))
+        if _find(names, name) is None:
+            names.append(name)
     else:
         raise TopicError("server.bad_request")
     save(site_dir, data)

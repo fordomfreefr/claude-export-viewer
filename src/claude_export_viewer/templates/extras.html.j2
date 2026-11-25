@@ -1,0 +1,108 @@
+{% extends "base.html.j2" %}
+{#- The other data of the export (extras.py, 11/11): kind = memory | reflections | design | chat | artifacts #}
+{% block title_attrs %}{% if kind not in ("chat", "other") %} data-i18n="{{ title_key }}"{% endif %}{% endblock %}
+{% block title %}{% if kind == "chat" %}{{ chat.title or t("web.untitled") }}{% elif kind == "other" %}{{ label }}{% else %}{{ t(title_key) }}{% endif %}{% endblock %}
+{% block root %}../{% endblock %}
+{% block content %}
+<p class="ex-back"><a href="{% if kind == 'chat' %}design.html{% else %}../index.html{% endif %}">← <span data-i18n="{% if kind == 'chat' %}web.extras.design{% else %}web.extras.back{% endif %}">{{ t("web.extras.design" if kind == "chat" else "web.extras.back") }}</span></a></p>
+{#- 22/11: the buttons at the bottom right as on the other pages (nav.js) #}
+<h1>{% if kind == "chat" %}{{ chat.title or t("web.untitled") }}{% elif kind == "other" %}{{ label }}{% else %}{{ T(title_key) }}{% endif %}</h1>
+
+{% if kind == "memory" %}
+  {% if not versions %}<p class="ex-none">{{ T("web.extras.none") }}</p>{% else %}
+  <p class="ex-note">{{ T("web.extras.memory_note") }}</p>
+  <div class="ex-bar">
+    <label>{{ T("web.extras.version") }} <select id="ex-version">
+      {% for v in versions|reverse %}<option value="{{ loop.revindex0 }}">{{ v.date }}</option>{% endfor %}
+    </select></label>
+    <label class="ex-compare"{% if versions|length < 2 %} hidden{% endif %}><input type="checkbox" id="ex-compare"> {{ T("web.extras.compare") }}</label>
+  </div>
+  {% for v in versions %}{% set vi = loop.index0 %}
+  <div class="ex-version" data-version="{{ vi }}"{% if not loop.last %} hidden{% endif %}>
+    {% for f in v.files %}
+    <section class="ex-card">
+      <h2 class="ex-path">{{ f.path }}</h2>
+      {% if f.updated_at %}<p class="ex-date">{{ T("web.extras.updated") }} {{ isodate(f.updated_at) }}</p>{% endif %}
+      <div class="ex-text content-text">{{ md(f.content) }}</div>
+      <pre class="ex-diff" hidden>{{ diffs[vi ~ ":" ~ f.path] }}</pre>
+    </section>
+    {% endfor %}
+    {% for path in removed[vi] %}<section class="ex-card ex-gone"><h2 class="ex-path">{{ path }}</h2><p>{{ T("web.extras.removed") }}</p></section>{% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+{% elif kind == "reflections" %}
+  {% if not items %}<p class="ex-none">{{ T("web.extras.none") }}</p>{% endif %}
+  {% for r in items %}
+  <section class="ex-card">
+    <h2 class="ex-path">{{ T("web.extras.period", period=r.period) if r.period else "" }}</h2>
+    {% if r.created_at %}<p class="ex-date">{{ isodate(r.created_at) }}</p>{% endif %}
+    <div class="ex-text content-text">{{ md(r.content) }}</div>
+  </section>
+  {% endfor %}
+
+{% elif kind == "design" %}
+  {% if not chats %}<p class="ex-none">{{ T("web.extras.none") }}</p>{% endif %}
+  <ul class="ex-list">
+  {% for c in chats %}
+    <li><a href="design-{{ c.uuid }}.html">{{ c.title or t("web.untitled") }}</a>
+      <small>{% if c.project %}{{ c.project }} · {% endif %}{{ T("web.extras.messages", n=c.messages|length) }}{% if c.updated_at or c.created_at %} · {{ isodate(c.updated_at or c.created_at) }}{% endif %}</small></li>
+  {% endfor %}
+  </ul>
+
+{% elif kind == "chat" %}
+  <p class="ex-note">{% if chat.project %}{{ chat.project }} · {% endif %}{{ T("web.extras.design_one") }}</p>
+  <div class="messages">
+  {% for m in chat.messages %}
+    <div class="message message-{{ m.role }}">
+      <div class="message-time"><b class="message-who" data-i18n="web.who.{{ m.role }}">{{ t("web.who." ~ m.role) }}</b> {% if m.created_at %}{{ isodate(m.created_at, True) }}{% endif %}</div>
+      <div class="message-bubble">
+        {% for f in m.files %}<details class="ex-attach"><summary>📎 {{ f.name }}</summary><pre class="ex-raw">{{ f.content }}</pre></details>{% endfor %}
+        {% if m.text %}<div class="content-text{% if m.role == 'human' %} plain-text{% endif %}">{% if m.role == "human" %}{{ m.text }}{% else %}{{ md(m.text) }}{% endif %}</div>
+        {% else %}<pre class="ex-raw">{{ m.raw }}</pre>{% endif %}
+        {% if m.tools %}<details class="ex-tools"><summary>{{ T("web.extras.tools", n=m.tools|length) }}</summary>
+          {% for c in m.tools %}<div class="ex-tool"><b>{{ c.name }}</b>{% if c.input and c.input != "null" %}<pre class="ex-raw">{{ c.input }}</pre>{% endif %}{% if c.output %}<pre class="ex-raw ex-out">{{ c.output }}</pre>{% endif %}</div>{% endfor %}
+        </details>{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+  </div>
+
+{% elif kind == "artifacts" %}
+  {% if not items %}<p class="ex-none">{{ T("web.extras.none") }}</p>{% else %}
+  <p class="ex-note">{{ T("web.extras.artifacts_note") }}</p>{% endif %}
+  {% for a in items %}
+  <section class="ex-card" data-artifact="{{ a.id }}">
+    <h2 class="ex-title">{{ a.title }}</h2>
+    <p class="ex-date">{#- 22/11: "artifact" (the word of the export, in English) says nothing on this page #}{% if a.kind and a.kind != "artifact" %}{{ a.kind }} · {% endif %}{{ T("web.extras.versions", n=a.versions|length) }}{% if a.updated_at %} · {{ isodate(a.updated_at) }}{% endif %}</p>
+    <table class="ex-versions">
+    {% for v in a.versions %}
+      <tr data-version="{{ v.id }}">
+        <td>{{ isodate(v.created_at, True) if v.created_at else "" }}{% if v.id == a.active %} <span class="ex-active">{{ T("web.extras.active") }}</span>{% endif %}</td>
+        <td>{{ v.title }}{% if v.description %}<br><small>{{ v.description }}</small>{% endif %}
+          {% if v.boards %}<br><small>{{ T("web.extras.boards") }} {% for file, title in v.boards %}<a class="ex-open ex-board" href="#" data-path="project/{{ file }}">{{ title }}</a>{% if not loop.last %} · {% endif %}{% endfor %}</small>{% endif %}</td>
+        <td class="ex-size">{{ T("web.size_kb", size=(v.size / 1024)|round(1)) if v.size < 1048576 else T("web.size_mb", size=(v.size / 1048576)|round(1)) }}</td>
+        <td>{% if v.files %}<button type="button" class="ex-open admin-btn" data-path="{{ 'index.html' if v.openable else v.files[0].path }}">{{ T("web.extras.open") }}</button>{% else %}<small>{{ T("web.extras.no_files") }}</small>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </table>
+  </section>
+  {% endfor %}
+  <p class="ex-status" id="ex-status" hidden></p>
+
+{% elif kind == "other" %}
+  <p class="ex-note">{{ T("web.extras.other_note", category=category, date=date) }}</p>
+  {% for f in files %}
+  <details class="ex-card ex-file"{% if loop.length == 1 %} open{% endif %}>
+    <summary class="ex-path">{{ f.name }} <small>{{ T("web.size_kb", size=((f.size / 1024)|round(1))) }}</small></summary>
+    {% if f.text is not none %}<pre class="ex-raw">{{ f.text }}</pre>{% else %}<p class="ex-none">{{ T("web.extras.not_text") }}</p>{% endif %}
+  </details>
+  {% endfor %}
+{% endif %}
+{% include "_page_nav.html.j2" %}
+{% endblock %}
+{% block scripts %}
+<script src="../extras.js"></script>
+<script defer src="../nav.js"></script>
+{% endblock %}

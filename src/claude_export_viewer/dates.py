@@ -37,15 +37,3 @@ def local(d: datetime) -> datetime:
     return d.astimezone() if d.tzinfo is not None else d
 
 
-def date_fr(value: Any, to_local: bool = True) -> str:
-    """"23/10/2026" ("" if there is no readable date)."""
-    d = parse(value)
-    if d is None:
-        return ""
-    return (local(d) if to_local else d).strftime("%d/%m/%Y")
-
-
-def datetime_fr(value: Any) -> str:
-    """"23/10/2026 à 10:00", local time ("" if there is no readable date)."""
-    d = parse(value)
-    return local(d).strftime("%d/%m/%Y à %H:%M") if d is not None else ""

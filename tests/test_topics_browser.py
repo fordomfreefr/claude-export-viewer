@@ -59,18 +59,40 @@ def test_choose_filter_rename_delete(tmp_path: Path, page) -> None:
     pg = page
     try:
         pg.goto(site.joinpath("index.html").as_uri())  # as a file: nothing to change
-        assert pg.locator(".topic-select").count() == 0 and pg.is_hidden("#filter-topic")
+        pg.click("#tab-filters")  # 14/11: the filters in their tab
+        assert pg.locator(".topic-select").count() == 0 and pg.is_visible("#filter-topic")  # shown before any topic
+        assert pg.eval_on_selector_all("#filter-topic option", "o => o.map(x => x.textContent)") == [
+            "Toutes les rubriques", "Sans rubrique"]  # read only: no "Nouvelle rubrique…"
 
         pg.goto(f"http://127.0.0.1:{server.server_address[1]}/index.html")
-        pg.wait_for_selector(".topic-select")
+        pg.click("#tab-filters")  # 14/11: the filters in their tab
+        pg.wait_for_selector(".topic-select", state="attached")  # P7: an empty menu shows under the mouse
         assert pg.locator(".topic-select").count() == 5
+        # a topic created from the filter: the filter stays on what it showed
+        pg.wait_for_function("() => document.getElementById('filter-topic').options.length === 3")
+        assert pg.eval_on_selector_all("#filter-topic option", "o => o.map(x => x.textContent)") == [
+            "Toutes les rubriques", "Sans rubrique", "Nouvelle rubrique…"]
+        pg.select_option("#filter-topic", " ")
+        pg.select_option("#filter-topic", label="Nouvelle rubrique…")
+        assert pg.input_value("#filter-topic") == " " and pg.is_hidden("#filter-topic")
+        pg.fill(".filter-topic-new input", "math")
+        pg.press(".filter-topic-new input", "Enter")
+        pg.wait_for_function("() => [...document.getElementById('filter-topic').options].some(o => o.value === 'math')")
+        assert topics.load(site) == {"topics": ["math"], "assign": {}}
+        assert pg.is_visible("#filter-topic") and pg.locator(".filter-topic-new").count() == 0
+        assert pg.input_value("#filter-topic") == " " and len(visible(pg)) == 5
+        pg.select_option("#filter-topic", label="Nouvelle rubrique…")
+        pg.press(".filter-topic-new input", "Escape")  # given up: nothing created
+        assert pg.is_visible("#filter-topic") and topics.load(site)["topics"] == ["math"]
+        pg.select_option("#filter-topic", "")
         # a closed menu holds only its value; it is completed when it opens (mouse or keyboard)
         assert pg.eval_on_selector_all(cell("c1") + " option", "o => o.length") == 1
         pg.dispatch_event(cell("c1") + " select", "mousedown")
         assert pg.eval_on_selector_all(cell("c1") + " option", "o => o.map(x => x.textContent)") == [
-            "Rubrique…", "Nouvelle rubrique…"]
+            "Rubrique…", "math", "Nouvelle rubrique…"]  # (math: created from the filter)
 
         def choose(uuid: str, **option) -> None:
+            pg.hover(cell(uuid))  # P7: an empty menu shows under the mouse
             pg.focus(cell(uuid) + " select")  # (the menu is completed when it opens)
             pg.select_option(cell(uuid) + " select", **option)
 
@@ -95,7 +117,7 @@ def test_choose_filter_rename_delete(tmp_path: Path, page) -> None:
         assert topics.load(site) == {"topics": ["math", "Médecine"], "assign": {"c1": "math", "c2": "math", "c3": "Médecine"}}
 
         options = pg.eval_on_selector_all("#filter-topic option", "o => o.map(x => x.textContent)")
-        assert options == ["Toutes les rubriques", "Sans rubrique", "math", "Médecine"]
+        assert options == ["Toutes les rubriques", "Sans rubrique", "math", "Médecine", "Nouvelle rubrique…"]
         pg.select_option("#filter-topic", "math")
         assert visible(pg) == ["c1", "c2"]
         for order in ("name-asc", "messages-desc", "date-asc"):  # sorting keeps the filter
@@ -108,9 +130,12 @@ def test_choose_filter_rename_delete(tmp_path: Path, page) -> None:
 
         pg.select_option("#filter-topic", "math")
         pg.reload()
-        pg.wait_for_selector(".topic-select")
+        pg.click("#tab-filters")  # 14/11: the filters in their tab
+        pg.wait_for_selector(".topic-select", state="attached")  # P7: an empty menu shows under the mouse
         assert pg.input_value("#filter-topic") == "math" and visible(pg) == ["c1", "c2"]
 
+        if pg.is_hidden("#topics-manage"):
+            pg.click("#tab-data")  # 14/11: in the tab of the data
         pg.click("#topics-manage")
         pg.locator("#topics-list li", has_text="math").get_by_role("button", name="Renommer").click()
         pg.fill("#topics-list input", "Mathématiques")
@@ -123,14 +148,17 @@ def test_choose_filter_rename_delete(tmp_path: Path, page) -> None:
         topic_is("c3", "")
         assert topics.load(site) == {"topics": ["Mathématiques"], "assign": {"c1": "Mathématiques", "c2": "Mathématiques"}}
 
+        pg.click("#tab-filters")
         pg.select_option("#filter-topic", "")  # (c4 is hidden by the filter)
         pg.select_option("#lang-select", "ja")
+        pg.hover(cell("c4"))
         pg.focus(cell("c4") + " select")
         assert pg.eval_on_selector_all(cell("c4") + " option", "o => o.map(x => x.textContent)") == [
             "カテゴリー…", "Mathématiques", "新しいカテゴリー…"]
         pg.select_option("#lang-select", "fr")
 
         pg.goto(site.joinpath("index.html").as_uri())  # as a file again: read only, filter works
+        pg.click("#tab-filters")  # 14/11: the filters in their tab
         pg.wait_for_selector(".topic-badge")
         assert pg.locator(".topic-select").count() == 0
         pg.select_option("#filter-topic", "Mathématiques")
@@ -154,7 +182,15 @@ def test_settings_frame_buttons_open_and_close(tmp_path: Path, page) -> None:
     pg = page
     try:
         pg.goto(f"http://127.0.0.1:{server.server_address[1]}/index.html")
-        pg.wait_for_selector("#admin-downloads:not([hidden])")
+        # 14/11: the frame of the data is a tab, shown with the server, closed while the overview is open; in it,
+        # first the frame of the import (dashes), then the buttons and the folders, at once
+        pg.wait_for_selector("#tab-data:visible")
+        assert pg.is_hidden("#admin-import") and pg.get_attribute("#tab-overview", "aria-selected") == "true"
+        pg.click("#tab-data")
+        first = pg.eval_on_selector("#admin-bar .admin-bar", "e => e.firstElementChild.id")
+        assert first == "admin-import" and pg.is_visible("#admin-folders") and pg.is_hidden("#overview")
+        assert "Dernier export importé : " in pg.inner_text("#admin-import") and "Nouvel export : " in pg.inner_text("#admin-import")
+        pg.wait_for_selector("#admin-downloads:visible")
         pg.wait_for_selector("#topics-manage:not([hidden])")
         # everything sits in the frame, every setting is a button
         inside = pg.eval_on_selector_all("#admin-bar #admin-import, #admin-bar #topics-manage, #admin-bar #dl-change, "
@@ -176,15 +212,22 @@ def test_settings_frame_buttons_open_and_close(tmp_path: Path, page) -> None:
                 pg.click(cross)
                 assert state(button, box) == (False, "false")
 
-        log_done = "document.getElementById('admin-log').innerText.includes('Opération non terminée')"
-        pg.click("#admin-import")  # no manifest: the log explains what to do
+        # 14/11: no manifest in the downloads: the frame of the import opens the window to choose the files, taken
+        # as if dropped
+        log_done = "document.getElementById('admin-log').innerText.includes('notes.txt')"
+        with pg.expect_file_chooser() as chooser:
+            pg.click("#admin-import")
+        assert chooser.value.is_multiple()
+        chooser.value.set_files(files=[{"name": "notes.txt", "mimeType": "text/plain", "buffer": b"x"}])
         pg.wait_for_function(log_done)
         assert state("#admin-import", "#admin-panel") == (True, "true")
         pg.click("#admin-import")  # a second click closes the log
         assert state("#admin-import", "#admin-panel") == (False, "false")
-        pg.click("#admin-import")  # a third one imports again
+        (dl / "manifest-1.json").write_text("{}", encoding="utf-8")  # unreadable: not a manifest, the window again
+        with pg.expect_file_chooser() as chooser:
+            pg.click("#admin-import")
+        chooser.value.set_files(files=[{"name": "notes.txt", "mimeType": "text/plain", "buffer": b"x"}])
         pg.wait_for_function(log_done)
-        assert pg.inner_text("#admin-log").count("Aucun manifeste trouvé") == 1  # (a fresh log)
         pg.click("#admin-close")  # the cross is kept
         assert state("#admin-import", "#admin-panel") == (False, "false")
         assert pg.errors == []

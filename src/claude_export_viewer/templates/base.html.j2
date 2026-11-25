@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title{% block title_attrs %} data-i18n="web.site_title"{% endblock %}>{% block title %}{{ t("web.site_title") }}{% endblock %}</title>
-  <link rel="stylesheet" href="{% block root %}{% endblock %}style.css">
+  {#- AF-f3 (14/11): the attribute is always set, the theme of the system read here (and followed): the dark theme
+      is written once in the CSS, for [data-theme="dark"] (nav.js setTheme) #}
+  <script>(function () { var m = null, q = window.matchMedia && matchMedia("(prefers-color-scheme: dark)");
+    try { m = localStorage.getItem("cev-theme"); } catch (e) { /* no storage */ }
+    function set() { var s = null; try { s = localStorage.getItem("cev-theme"); } catch (e) { /* no storage */ }
+      document.documentElement.setAttribute("data-theme", s === "light" || s === "dark" ? s : q && q.matches ? "dark" : "light"); }
+    set(); if (q && q.addEventListener) { q.addEventListener("change", set); } })();</script>
+  <link rel="icon" type="image/svg+xml" href="{% block root %}{% endblock %}icon.svg">
+  <link rel="stylesheet" href="{{ self.root() }}style.css">
   {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -14,6 +22,8 @@
 {#- Texts of every language, then the script putting the chosen one in place (before the other scripts) #}
 <script src="{{ self.root() }}i18n-data.js"></script>
 <script src="{{ self.root() }}i18n.js"></script>
+<script src="{{ self.root() }}icons.js"></script>
+<script src="{{ self.root() }}confirm.js"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

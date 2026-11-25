@@ -23,7 +23,11 @@ def python_command() -> str:
 
 def command_line(args: list[str]) -> str:
     """A command to copy into a terminal (cmd/PowerShell on Windows, a POSIX shell elsewhere)."""
-    return subprocess.list2cmdline(args) if WINDOWS else shlex.join(args)
+    if not WINDOWS:
+        return shlex.join(args)
+    # list2cmdline quotes only blanks; cmd.exe would take > < | & ^ for redirections ("piper-tts[http]>=1.8.0")
+    return " ".join(f'"{a}"' if any(c in a for c in '<>|&^') and not a.startswith('"') else subprocess.list2cmdline([a])
+                    for a in args)
 
 
 def console_python() -> str:
@@ -103,3 +107,95 @@ def install_hint() -> str:
     if sys.platform == "darwin":
         return "python3 -m pip install jinja2 mistune pydantic pygments"
     return "sudo apt install python3-jinja2 python3-mistune python3-pydantic python3-pygments"
+
+
+# --- Choosing a folder (the ZIP of an export) ------------------------------------------
+#
+# The window of the system itself: kdialog (Plasma) or zenity (GNOME and others) on Linux,
+# "choose folder" on macOS, the folder dialog of Windows Forms (PowerShell) on Windows; else the
+# Tk dialog of Python when it is installed. Each in a child process: the server is not blocked
+# for the other requests. Windows and macOS: written from their documentation, not tried yet.
+
+_TK_SCRIPT = (
+    "import sys, tkinter, tkinter.filedialog as f\n"
+    "r = tkinter.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
+    "p = f.askdirectory(initialdir=sys.argv[1], title=sys.argv[2], mustexist=True)\n"
+    "sys.stdout.write(p or '')\n"
+)
+
+
+def _folder_commands(start: str, title: str) -> list[list[str]]:
+    import shutil
+    if WINDOWS:
+        ps = ("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; "
+              "$d=New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description=$env:CEV_TITLE; "
+              "$d.SelectedPath=$env:CEV_START; if($d.ShowDialog() -eq 'OK'){[Console]::Out.Write($d.SelectedPath)}")
+        cmds = [["powershell", "-NoProfile", "-STA", "-Command", ps]]
+    elif sys.platform == "darwin":
+        script = ('POSIX path of (choose folder with prompt (system attribute "CEV_TITLE") '
+                  'default location (POSIX file (system attribute "CEV_START")))')
+        cmds = [["osascript", "-e", script]]
+    else:
+        cmds = []
+        if shutil.which("kdialog"):
+            cmds.append(["kdialog", "--getexistingdirectory", start, "--title", title])
+        if shutil.which("zenity"):
+            cmds.append(["zenity", "--file-selection", "--directory", "--filename", start.rstrip("/") + "/",
+                         "--title", title])
+    cmds.append([sys.executable, "-c", _TK_SCRIPT, start, title])
+    return cmds
+
+
+def choose_folder(start: Path, title: str) -> str | None:
+    """The folder chosen in a window of the system, "" when cancelled, None when no such window
+    could be shown (the page then asks for the path itself)."""
+    env = {**os.environ, "CEV_START": str(start), "CEV_TITLE": title}
+    for cmd in _folder_commands(str(start), title):
+        if cmd[0] == sys.executable:
+            try:
+                import tkinter  # noqa: F401
+            except ImportError:
+                continue
+        try:
+            proc = subprocess.run(cmd, capture_output=True, env=env, timeout=1800, **no_window())
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        out = proc.stdout.decode("utf-8", "replace").strip()
+        if proc.returncode == 0 and out:
+            return out.rstrip("/\\") if len(out) > 1 else out
+        if proc.returncode in (0, 1):  # closed or cancelled (kdialog, zenity, PowerShell, Tk: 1 or empty)
+            return ""
+    return None
+
+
+def available_memory() -> int | None:
+    """Bytes of memory free for a program now (Linux: MemAvailable; Windows: the free physical memory; elsewhere what
+    os.sysconf gives), None when unknown (review of 21/11: the parts of a very long conversation follow it)."""
+    try:
+        with open("/proc/meminfo", encoding="ascii") as f:
+            for line in f:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    if WINDOWS:
+        try:
+            import ctypes
+
+            class _Status(ctypes.Structure):
+                _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                            ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                            ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                            ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+                            ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+            status = _Status()
+            status.dwLength = ctypes.sizeof(_Status)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):  # type: ignore[attr-defined]
+                return int(status.ullAvailPhys)
+        except (OSError, AttributeError, ValueError):
+            return None
+    try:
+        return os.sysconf("SC_AVPHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")
+    except (ValueError, OSError, AttributeError):
+        return None  # (macOS has no free-pages count there: the default sizes are used)
+

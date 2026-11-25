@@ -109,7 +109,7 @@ _PS_SHORTCUT = (
 def _file_name(name: str) -> str:
     """A name usable as a Windows file name."""
     clean = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', " ", name)
-    return re.sub(r"\s+", " ", clean).strip(" .") or "Claude Archives"
+    return re.sub(r"\s+", " ", clean).strip(" .") or "Claude Library"
 
 
 def windows_shortcuts(site_dir: Path, launcher: Path, icon: Path, folders: list[Path]) -> list[tuple[Path, dict[str, str]]]:

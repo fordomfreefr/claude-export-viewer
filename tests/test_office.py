@@ -52,7 +52,7 @@ def build(tmp: Path, convs: list[dict]) -> Path:
 
 def conv(uuid: str, name: str, text: str = "Bonjour $\\alpha$") -> dict:
     return {"uuid": uuid, "name": name, "created_at": "2026-10-23T08:00:00Z",
-            "chat_messages": [{"uuid": uuid + "m", "parent_message_uuid": ROOT, "sender": "human",
+            "chat_messages": [{"uuid": uuid + "m", "parent_message_uuid": ROOT, "sender": "assistant",
                                "created_at": "2026-10-23T08:00:00Z", "content": [{"type": "text", "text": text}]}]}
 
 
@@ -264,6 +264,34 @@ def test_main_thread_only_by_command_and_by_server(tmp_path: Path, capsys) -> No
         assert urllib.parse.unquote(headers["Content-Disposition"]).endswith("2026-10-23 Titre.docx")
         status, _, body = get(base + "/export/c.md?versions=0")
         assert "Ancienne réponse".encode() not in body
+    finally:
+        os.environ["PATH"] = old
+        server.shutdown()
+
+
+def test_one_message_exported(tmp_path: Path) -> None:
+    """PT-m1 (08/11): /export/<page>.<fmt>?msg=<uuid> gives that message only, an other version too."""
+    msgs = [
+        {"uuid": "q", "parent_message_uuid": ROOT, "sender": "human", "created_at": "2026-10-23T08:00:00Z",
+         "content": [{"type": "text", "text": "Question"}]},
+        {"uuid": "r1", "parent_message_uuid": "q", "sender": "assistant", "created_at": "2026-10-23T08:01:00Z",
+         "content": [{"type": "text", "text": "Ancienne réponse"}]},
+        {"uuid": "r2", "parent_message_uuid": "q", "sender": "assistant", "created_at": "2026-10-23T08:02:00Z",
+         "content": [{"type": "text", "text": "Nouvelle réponse"}]},
+    ]
+    site = build(tmp_path, [{"uuid": "c", "name": "Titre", "created_at": "2026-10-23T08:00:00Z", "chat_messages": msgs}])
+    server, base = start_server(site)
+    old = install_fake_pandoc(tmp_path)
+    try:
+        status, headers, body = get(base + "/export/c.md?msg=r1")
+        md = body.decode()
+        assert status == 200 and md.startswith("# Titre\n") and "(un seul message)" in md
+        assert "**Claude**" in md and "Ancienne réponse" in md
+        assert "Question" not in md and "Nouvelle réponse" not in md
+        assert "Titre%20%28message%202026-10-23%20" in headers["Content-Disposition"]
+        status, _, body = get(base + "/export/c.odt?msg=q")
+        assert status == 200 and body.startswith(b"FAKE-odt|")
+        assert get(base + "/export/c.md?msg=inconnu")[0] == 404
     finally:
         os.environ["PATH"] = old
         server.shutdown()

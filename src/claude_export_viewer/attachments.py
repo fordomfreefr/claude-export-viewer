@@ -9,12 +9,14 @@ get ``.txt`` added, since only their text is available.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from urllib.parse import quote
 
 FOLDER = "attachments"
+CREATED = "_claude"  # files/<conversation>/_claude/<content>/<name>: files created by Claude (created.py)
 LONG = 3000  # characters: beyond, the page warns before showing the text
 
 TEXT_EXTENSIONS = {
@@ -37,21 +39,38 @@ class Context:
     key: str  # conversation page name without .html
     used: set[str] = field(default_factory=set)
     injected: set[tuple[str, str]] = field(default_factory=set)
-    found: dict[str, dict] = field(default_factory=dict)  # the user's files found on the computer (userfiles)
+    links: dict[str, dict] = field(default_factory=dict)  # link id -> what the page shows of it (userfiles.views)
+    created: set[str] = field(default_factory=set)  # copies written for the files created by Claude
 
 
 _ctx: Context | None = None
 
 
-def begin(site_dir: Path, key: str, found: dict[str, dict] | None = None) -> None:
+def begin(site_dir: Path, key: str) -> None:
     """Called before rendering a conversation page."""
     global _ctx
-    _ctx = Context(Path(site_dir).resolve(), key, found=found or {})
+    _ctx = Context(Path(site_dir).resolve(), key)
 
 
-def found(name: str) -> dict | None:
-    """The user's copy of a file of this conversation, if found on the computer."""
-    return _ctx.found.get(name) if _ctx is not None and name else None
+def set_links(links: dict[str, dict]) -> None:
+    """The links of the conversation and their association (userfiles.views)."""
+    if _ctx is not None:
+        _ctx.links = links
+
+
+def site_file(rel: str) -> Path | None:
+    """A file of the site folder (a copy of a link), during a page rendering."""
+    return _ctx.site_dir / rel if _ctx is not None else None
+
+
+def link(link_id: str) -> dict | None:
+    """What the page shows of a link (None outside a page rendering)."""
+    return _ctx.links.get(link_id) if _ctx is not None else None
+
+
+def created_copies() -> list[str]:
+    """The copies written for the files created by Claude during this rendering."""
+    return sorted(_ctx.created) if _ctx is not None else []
 
 
 def end() -> None:
@@ -70,7 +89,8 @@ def first_injected(source: str, text: str) -> bool:
 
 
 def _file_name(name: str) -> tuple[str, bool]:
-    clean = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", name).strip(" .") or "document"
+    from .userfiles import short_name
+    clean = short_name(re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", name).strip(" .") or "document")
     ext = clean.rpartition(".")[2].lower() if "." in clean else ""
     if ext in TEXT_EXTENSIONS:
         return clean, False
@@ -89,11 +109,34 @@ def save(name: str, text: str) -> Saved | None:
         candidate = f"{stem} ({n}).{ext}" if dot else f"{file_name} ({n})"
     _ctx.used.add(candidate.lower())
     path = _ctx.site_dir / FOLDER / _ctx.key / candidate
-    path.parent.mkdir(parents=True, exist_ok=True)
     data = text.encode("utf-8")
-    if not path.exists() or path.read_bytes() != data:
-        path.write_bytes(data)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists() or path.read_bytes() != data:
+            path.write_bytes(data)
+    except OSError:  # (review of 21/11) one file that cannot be written: shown without its file, the page made all the same
+        return None
     return Saved(f"../{FOLDER}/{quote(_ctx.key)}/{quote(candidate)}", path, text_only)
+
+
+def save_created(name: str, text: str) -> str | None:
+    """Write a file created by Claude into the site, once per content (several versions of a name
+    keep apart, the same content handed over twice is written once); its path from the site folder,
+    or None outside a page rendering."""
+    if _ctx is None:
+        return None
+    from .userfiles import FOLDER as FILES, safe_name
+    data = text.encode("utf-8")
+    rel = f"{FILES}/{_ctx.key}/{CREATED}/{hashlib.sha256(data).hexdigest()[:12]}/{safe_name(name)}"
+    path = _ctx.site_dir / rel
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists() or path.read_bytes() != data:
+            path.write_bytes(data)
+    except OSError:  # (review of 21/11) as in save()
+        return None
+    _ctx.created.add(rel)
+    return rel
 
 
 def resolve(site_dir: Path, relative: str) -> Path | None:

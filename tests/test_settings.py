@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from claude_export_viewer import fetch, settings
+from claude_export_viewer import backup, fetch, settings
 from claude_export_viewer.cli import main
 from claude_export_viewer.server import make_server, import_job, Job, ServerContext
 
@@ -150,7 +150,8 @@ def test_settings_endpoints(tmp_path: Path, system_dl: Path) -> None:
         tok = token(server)
         status, body = request(server, "GET", "/__cev__/settings", {"X-CEV-Token": tok})
         assert status == 200 and json.loads(body) == {"downloads": "", "system": str(system_dl),
-                                            "file_folders": [str(system_dl)], "file_folders_set": False}
+                                            "file_folders": [str(system_dl)], "file_folders_set": False,
+                                            "site_size": backup.site_size(site)}
 
         status, body = post(server, json.dumps({"downloads": str(usb)}).encode(), tok)
         assert status == 200 and json.loads(body) == {"downloads": str(usb.resolve())}

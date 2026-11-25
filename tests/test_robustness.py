@@ -62,7 +62,7 @@ def test_pandoc_timeout_is_a_clear_error() -> None:
 def test_one_unreadable_conversation_does_not_stop_the_site(tmp_path: Path, capsys) -> None:
     out = site_with(tmp_path, [conv("a"), conv("b")])
     # archived copy of "a" replaced by valid JSON of the wrong shape
-    (out / "archive" / "conversations" / "a.json.gz").write_bytes(gzip.compress(b"[1, 2]"))
+    (out / "archive" / "conversations" / "a.jsonl.gz").write_bytes(gzip.compress(b"[1, 2]"))
     capsys.readouterr()
     main(["-o", str(out), "--reconstruire"])
     printed = capsys.readouterr().out

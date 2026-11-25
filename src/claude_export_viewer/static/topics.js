@@ -129,13 +129,60 @@
   }
 
   // --- filter of the index ----------------------------------------------------------
+  // Always shown (even before the first topic); "New topic…" at the end through the server.
+  var NEW = "\u0001new";  // value of "New topic…" (no topic name holds a control character)
   function renderFilter() {
     var current = filter.value;
     while (filter.options.length > 2) { filter.remove(2); }  // keep "every topic" and "without topic"
     sorted().forEach(function (name) { filter.appendChild(el("option", { value: name }, name)); });
+    if (token) { filter.appendChild(i18nEl("option", "web.topics.new", null, { value: NEW })); }
     // (" " is "without topic": no topic name is blank)
     filter.value = current === "" || current === " " || state.topics.indexOf(current) >= 0 ? current : "";
-    filter.hidden = state.topics.length === 0;
+    filter.dataset.prev = filter.value;
+  }
+
+  // the value before a choice, to come back to it after "New topic…"
+  ["focus", "pointerdown"].forEach(function (type) {
+    filter.addEventListener(type, function () { if (filter.value !== NEW) { filter.dataset.prev = filter.value; } });
+  });
+  // registered before the filters of the index (inline script after topics.js): "New topic…" never filters
+  filter.addEventListener("change", function (event) {
+    if (filter.value !== NEW) { filter.dataset.prev = filter.value; return; }
+    event.stopImmediatePropagation();
+    filter.value = filter.dataset.prev || "";
+    askFilterName();
+  });
+
+  function askFilterName() {
+    var form = el("form", { "class": "topic-new filter-topic-new" });
+    var input = el("input", { type: "text", maxlength: "40", autocomplete: "off", spellcheck: "false",
+      placeholder: CEV.t("web.topics.new_placeholder") });
+    form.appendChild(input);
+    form.appendChild(i18nEl("button", "web.topics.ok", null, { type: "submit", "class": "admin-btn small" }));
+    filter.parentNode.insertBefore(form, filter.nextSibling);
+    filter.hidden = true;
+    input.focus();
+    var done = false;
+    function close() {
+      done = true;
+      if (form.parentNode) { form.parentNode.removeChild(form); }
+      filter.hidden = false;
+    }
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      if (!input.value.trim()) { close(); return; }
+      done = true;
+      send({ action: "create", topic: input.value }, function (msg) {
+        close();
+        var e = el("div", { "class": "topic-error", role: "alert" }, msg);
+        filter.parentNode.insertBefore(e, filter.nextSibling);
+        setTimeout(function () { if (e.parentNode) { e.parentNode.removeChild(e); } }, 5000);
+      }).then(function (ok) { if (ok) { close(); } });
+    });
+    input.addEventListener("keydown", function (event) { if (event.key === "Escape") { close(); } });
+    form.addEventListener("focusout", function (event) {
+      if (!form.contains(event.relatedTarget)) { setTimeout(function () { if (!done) { close(); } }, 150); }
+    });
   }
 
   // --- managing the topics (rename, delete) -------------------------------------------
@@ -255,6 +302,15 @@
     // a second click closes it, like the cross
     manageButton.addEventListener("click", function () { showManager(manager.hidden); });
     document.getElementById("topics-close").addEventListener("click", function () { showManager(false); });
+    // (22/11) "Créer" under the list
+    var create = document.getElementById("topics-create");
+    create.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var input = create.querySelector("input");
+      if (!input.value.trim()) { return; }
+      document.getElementById("topics-error").hidden = true;
+      send({ action: "create", topic: input.value }, managerError).then(function (ok) { if (ok) { input.value = ""; } });
+    });
   }
   // the topics are sorted in the order of the language
   document.addEventListener("cev-language", function () { if (items.length) { refresh(true); } });

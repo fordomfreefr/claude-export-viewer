@@ -125,8 +125,8 @@ def test_help_is_translated(capsys) -> None:
 
 def test_desktop_icon_names_every_language(tmp_path: Path) -> None:
     entry = desktop_entry(tmp_path, tmp_path / "x.py", tmp_path / "i.svg")
-    assert "Name=Claude Archives\n" in entry and "Name[fr]=Archives Claude\n" in entry
-    assert "Name[ja]=Claude アーカイブ\n" in entry and "Comment[de]=" in entry
+    assert "Name=Claude Library\n" in entry and "Name[fr]=Bibliothèque Claude\n" in entry
+    assert "Name[ja]=Claude ライブラリ\n" in entry and "Comment[de]=" in entry
 
 
 # --- pages and exports -----------------------------------------------------------
@@ -137,12 +137,15 @@ def test_pages_are_written_in_the_system_language(tmp_path: Path) -> None:
         main([str(export(tmp_path, [conv()])), "-o", str(tmp_path / "s"), "--date-export", "2026-10-20"])
     index = (tmp_path / "s" / "index.html").read_text(encoding="utf-8")
     page = (tmp_path / "s" / "conversations" / "c1.html").read_text(encoding="utf-8")
-    assert '<html lang="de">' in index and ">Claude-Unterhaltungen</span>" in index
+    assert '<html lang="de">' in index and ">Claude-Bibliothek</span>" in index
     assert ">Andere Version — 1 Nachricht, begonnen am 01.10.2026" in page
     data = (tmp_path / "s" / "i18n-data.js").read_text(encoding="utf-8")
     assert data.startswith("window.CEV_I18N = ") and '"build":"de"' in data
-    texts = json.loads(data[len("window.CEV_I18N = "):].rstrip().rstrip(";"))["texts"]
-    assert set(texts) == set(i18n.LANGUAGES) and "cli.error" not in texts["fr"]  # only what pages need
+    # P10 (11/11): one file of texts per language, a page loads only its language and English
+    files = sorted(p.stem for p in (tmp_path / "s" / "i18n").glob("*.js"))
+    assert files == sorted(i18n.LANGUAGES)
+    fr = (tmp_path / "s" / "i18n" / "fr.js").read_text(encoding="utf-8")
+    assert fr.startswith('window.CEV_I18N.texts["fr"] = ') and "cli.error" not in fr  # only what pages need
 
 
 def test_office_export_in_the_language_of_the_page(tmp_path: Path) -> None:
@@ -195,3 +198,12 @@ def test_import_log_in_the_language_of_the_page(tmp_path: Path) -> None:
         assert state["lines"][-1].startswith("4. Torna qui")
     finally:
         server.shutdown()
+
+
+def test_dumps_same_text_as_json() -> None:
+    """15/11 (PT-m6): i18n.dumps writes exactly what json.dumps(…, ensure_ascii=False) writes."""
+    import json
+    from claude_export_viewer import i18n
+    for v in ["", "é \"guillemets\" \\ \n\t\x01 ⟧ 字", 0, -12, 3.5, True, None, [1, "a"],
+              {"date": {"$day": "2026-11-15"}, "n": 3, "t": "x\"y", "f": {"$num": 0.1}, "b": False}, {}]:
+        assert i18n.dumps(v) == json.dumps(v, ensure_ascii=False), v

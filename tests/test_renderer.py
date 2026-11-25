@@ -261,7 +261,7 @@ def test_code_block_has_header_with_language_and_copy_button() -> None:
     result = render_markdown("```python\nx = 1 < 2\n```")
     assert '<div class="code-block">' in result
     assert '<span class="code-lang">Python</span>' in result
-    assert 'class="copy-btn"' in result and ">Copier</button>" in result
+    assert 'class="copy-btn"' in result and ">Copier</span></button>" in result
     assert 'class="language-python"' in result
     assert "&lt;" in result  # code still escaped
 
@@ -282,7 +282,68 @@ def test_message_shows_local_date_and_time_above_bubble() -> None:
                       created_at="2026-10-23T17:34:42Z")
     html_out = render_message(msg)
     local = datetime(2026, 10, 23, 17, 34, 42, tzinfo=timezone.utc).astimezone().strftime("%d/%m/%Y à %H:%M")
-    assert f'data-fmt="datetime">{local}</time></div>' in html_out
+    assert f'data-fmt="datetime">{local}</time><button type="button" class="fav-star"' in html_out  # the star after the date
     assert '<time datetime="2026-10-23T17:34:42+00:00"' in html_out  # reformatted by the browser
     assert html_out.index("message-time") < html_out.index("message-bubble")
-    assert "message-time" not in render_message(ChatMessage(uuid="n", sender="human", content=[TextContent(text="x")]))
+    assert '<b class="message-who" data-i18n="web.who.human">Moi</b> <time' in html_out  # "Moi" before the date
+    no_date = render_message(ChatMessage(uuid="n", sender="human", content=[TextContent(text="x")]))
+    assert "<time" not in no_date and ">Moi</b>" in no_date  # no date: the name only
+    answer = render_message(ChatMessage(uuid="a", sender="assistant", content=[TextContent(text="x")]))
+    assert ">Claude</b>" in answer and ">Moi<" not in answer
+
+
+def _blocks_msg(*blocks: dict) -> str:
+    from claude_export_viewer.models import parse_message
+    msg = parse_message({"uuid": "m", "sender": "assistant", "content": list(blocks)})
+    return render_message(msg)
+
+
+_INJ = {"type": "injected_prompt_block", "prompt": "Mémoire : x", "injection_source": {"type": "memory"}}
+_USE = {"type": "tool_use", "name": "web_search", "input": {"query": "q"}}
+_RES = {"type": "tool_result", "name": "web_search", "content": "résultat"}
+_THINK = {"type": "thinking", "thinking": "je réfléchis"}
+_TEXT = {"type": "text", "text": "Réponse"}
+
+
+def _groups(html_out: str) -> list[str]:
+    """The inside of each "Ressources de claude.ai" frame."""
+    import re
+    out, start = [], '<details class="cev-resources">'
+    for m in re.finditer(re.escape(start), html_out):
+        depth, i = 1, m.end()
+        for tag in re.finditer(r"<(/?)details\b", html_out[i:]):
+            depth += -1 if tag.group(1) else 1
+            if not depth:
+                out.append(html_out[i:i + tag.start()])
+                break
+    return out
+
+
+def test_claude_ai_blocks_grouped() -> None:
+    out = _blocks_msg(_INJ, _TEXT)
+    groups = _groups(out)
+    assert len(groups) == 1 and "injected" in groups[0] and "Réponse" not in groups[0]
+    assert 'data-i18n="web.resources"' in groups[0] and "Ressources de claude.ai (1)" in groups[0]
+    assert out.index("cev-resources") < out.index("Réponse")  # the run stays in its place
+    # thinking between two tools: in the frame; before the first or after the last: outside
+    out = _blocks_msg(_THINK, _USE, _RES, _THINK, _USE, _RES, _THINK, _TEXT)
+    groups = _groups(out)
+    assert len(groups) == 1 and "Ressources de claude.ai (4)" in groups[0]
+    assert groups[0].count('class="thinking"') == 1 and out.count('class="thinking"') == 3
+    # the text ends a run: two frames
+    assert len(_groups(_blocks_msg(_USE, _TEXT, _RES))) == 2
+
+
+def test_claude_ai_blocks_counter_checks() -> None:
+    # nothing from claude.ai: no frame (thinking alone, plain text)
+    assert "cev-resources" not in _blocks_msg(_THINK, _TEXT)
+    assert "cev-resources" not in _blocks_msg(_TEXT)
+    # an artifact is Claude's work: it ends the run and stays outside
+    art = {"type": "tool_use", "name": "artifacts",
+           "input": {"command": "create", "id": "a", "type": "text/markdown", "title": "Doc", "content": "# T"}}
+    out = _blocks_msg(_USE, art, _RES)
+    groups = _groups(out)
+    assert len(groups) == 2 and all("Doc" not in g for g in groups) and "Doc" in out
+    # the user's document stays outside
+    out = _blocks_msg({"type": "document"}, _USE)
+    assert len(_groups(out)) == 1 and "document_attached" not in _groups(out)[0] and "web.document_attached" in out

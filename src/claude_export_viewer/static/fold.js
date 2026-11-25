@@ -1,3 +1,32 @@
+/* "Masquer :" (21/11) — what the screen hides, kept by the browser for every conversation (localStorage
+ * cev-hide-*): the resources of the AI (checked at first: every folding line of claude.ai and the cut replies,
+ * body.cev-show-resources when unchecked), the notes, the titles, the numbers of the structure (structure.js), the
+ * other versions and the parts deleted on claude.ai (body.cev-main-only). The icon of a note or a title clicked
+ * while they are hidden shows them again (what is written must be seen). */
+(function () {
+  "use strict";
+  function get(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v === "1"; } catch (e) { return d; } }
+  function put(k, v) { try { localStorage.setItem(k, v ? "1" : "0"); } catch (e) { /* storage unavailable */ } }
+  [["hide-resources", "cev-show-resources", null, true, true], ["hide-notes", "cev-hide-notes", ".note-btn", false],
+   ["hide-titles", "cev-hide-titles", ".plan-add-title", false], ["hide-numbers", "cev-hide-numbers", null, false],
+   ["hide-versions", "cev-main-only", null, false]].forEach(function (x) {
+    var c = document.getElementById(x[0]);
+    if (!c) { return; }
+    var key = "cev-" + x[0], apply = function () { document.body.classList.toggle(x[1], x[4] ? !c.checked : c.checked); };
+    c.checked = get(key, x[3]);  // not the state the browser may restore after "back"
+    apply();
+    c.addEventListener("change", function () {
+      put(key, c.checked);
+      apply();
+      if (x[1] === "cev-main-only") { document.dispatchEvent(new Event("cev-versions")); }  // navigation, search, favorites
+    });
+    if (!x[2]) { return; }
+    document.addEventListener("click", function (e) {
+      if (c.checked && e.target.closest && e.target.closest(x[2])) { c.checked = false; put(key, false); apply(); }
+    }, true);
+  });
+})();
+
 /* Conversation pages: hide Claude's answers to keep only your own messages, one under the
  * other. The small arrow after the date of a message shows or hides the answer to that
  * message; the button of the header hides or shows them all. Kept while the tab is open
@@ -49,7 +78,7 @@
     var b = g.button = document.createElement("button");
     b.type = "button";
     b.className = "fold-one";
-    b.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    b.innerHTML = CEV.icon("hide", 13, "fold-hide") + CEV.icon("show", 13, "fold-show");  // (22/11: as the button of all)
     b.addEventListener("click", function () { set(g, !g.folded); refresh(); });
     time.appendChild(b);
     set(g, false);

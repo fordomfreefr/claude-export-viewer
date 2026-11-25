@@ -72,7 +72,7 @@ def test_build_site_index_content(tmp_path: Path) -> None:
     index_html = (output_dir / "index.html").read_text(encoding="utf-8")
     assert "First Chat" in index_html
     assert "Second Chat" in index_html
-    assert "2 conversations" in index_html
+    assert index_html.count('class="conversation-item"') == 2  # 14/11: the counts are written by the scripts
     # First Chat should appear before Second Chat (newer first)
     assert index_html.index("First Chat") < index_html.index("Second Chat")
     # With a single user, the user filter and the name on every line would be noise
@@ -122,7 +122,9 @@ def test_build_site_empty_conversations(tmp_path: Path) -> None:
 
     assert (output_dir / "index.html").exists()
     index_html = (output_dir / "index.html").read_text(encoding="utf-8")
-    assert ">0 conversation</span>" in index_html  # French: 0 is singular
+    assert 'id="welcome"' in index_html  # nothing yet: the welcome (P1)
+    from claude_export_viewer.i18n import t
+    assert t("web.index.count", "fr", n=0) == "0 conversation"  # French: 0 is singular
 
 
 def test_empty_conversations_are_skipped(tmp_path: Path) -> None:
@@ -155,7 +157,7 @@ def test_empty_conversations_are_skipped(tmp_path: Path) -> None:
     assert (stats.written, stats.skipped_empty) == (1, 3)
     assert sorted(p.name for p in (out / "conversations").glob("*.html")) == ["ok.html"]
     index_html = (out / "index.html").read_text(encoding="utf-8")
-    assert "1 conversation<" in index_html
+    assert index_html.count('class="conversation-item"') == 1
     for name in ("deleted", "blank", "image_only"):
         assert f"{name}.html" not in index_html
     # "Untitled" conversations that do have messages are kept

@@ -18,6 +18,7 @@ from __future__ import annotations
 import functools
 import html
 import json
+from json.encoder import encode_basestring as _encode_str
 import os
 from datetime import datetime
 from pathlib import Path
@@ -115,6 +116,10 @@ class Day(str):
     """An ISO date shown as a day, as written (the date of an export): "20/10/2026"."""
 
 
+class Tokens(int):
+    """A number of tokens, shown short: "850", "4,2 k", "480 k", "1,4 M" (see tokens.short)."""
+
+
 class LocalDate:
     """A moment shown as a day in local time (no hour): "23/10/2026"."""
 
@@ -141,6 +146,12 @@ def _format_arg(value: Any, lang: str) -> Any:
         return format_date(value.d, lang)
     if isinstance(value, datetime):
         return format_datetime(value, lang)
+    if isinstance(value, Tokens):
+        from .tokens import short
+
+        v, unit = short(int(value))
+        text = str(int(v)) if v == int(v) else f"{v:.1f}".replace(".", t("fmt.decimal", lang))
+        return f"{text} {unit}".strip()
     if isinstance(value, float):
         return format_number(value, lang)
     return value
@@ -192,6 +203,18 @@ def format_number(x: float, lang: str | None = None) -> str:
 # written), {"$date": iso} (local day), {"$datetime": iso}; numbers as {"$num": x}.
 
 
+def dumps(value: Any) -> str:
+    """``json.dumps(value, ensure_ascii=False)``, the same text, without making an encoder at each call for
+    the usual arguments of a translation (str, int, dict of them); 21 000 calls in a rebuild (PT-m6)."""
+    if isinstance(value, str):
+        return _encode_str(value)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return str(value)
+    if isinstance(value, dict) and all(isinstance(k, str) for k in value):
+        return "{" + ", ".join(f"{_encode_str(k)}: {dumps(v)}" for k, v in value.items()) + "}"
+    return json.dumps(value, ensure_ascii=False)
+
+
 def _js_arg(value: Any) -> Any:
     if isinstance(value, Day):
         return {"$day": str(value)}
@@ -199,6 +222,8 @@ def _js_arg(value: Any) -> Any:
         return {"$date": dates.utc(value.d).isoformat()}
     if isinstance(value, datetime):
         return {"$datetime": dates.utc(value).isoformat()}
+    if isinstance(value, Tokens):
+        return {"$tok": int(value)}
     if isinstance(value, float):
         return {"$num": value}
     return value
@@ -208,7 +233,7 @@ def html_args(**args: Any) -> str:
     """`` data-i18n-args='{…}'`` (arguments of the texts of an element), or "" without arguments."""
     if not args:
         return ""
-    payload = json.dumps({k: _js_arg(v) for k, v in args.items()}, ensure_ascii=False)
+    payload = dumps({k: _js_arg(v) for k, v in args.items()})
     return f" data-i18n-args='{html.escape(payload, quote=True)}'"
 
 
@@ -216,6 +241,18 @@ def html_text(key: str, tag: str = "span", attrs: str = "", **args: Any) -> str:
     """``<span data-i18n="key" …>text</span>`` (text HTML-escaped)."""
     data = f' data-i18n="{html.escape(key)}"' + html_args(**args)
     return f"<{tag}{attrs}{data}>{html.escape(t(key, **args), quote=False)}</{tag}>"
+
+
+def rich(text: str) -> str:
+    """Escaped text with the markers [v]…[/v] (verb) and [b]…[/b] (bold) turned into HTML."""
+    s = html.escape(text, quote=False)
+    s = s.replace("[v]", '<span class="hint-verb">').replace("[/v]", "</span>")
+    return s.replace("[b]", "<b>").replace("[/b]", "</b>")
+
+
+def html_rich(key: str, **args: Any) -> str:
+    """``<span data-i18n-rich="key">`` whose text keeps the [v]/[b] markers of :func:`rich`."""
+    return f'<span data-i18n-rich="{html.escape(key)}"{html_args(**args)}>{rich(t(key, **args))}</span>'
 
 
 def html_date(d: datetime | None, with_time: bool = False, to_local: bool = True) -> str:
@@ -235,7 +272,32 @@ def web_catalogs() -> dict[str, dict[str, Any]]:
     return out
 
 
+# i18n-data.js (P10, 11/11): the list of the languages and a small loader; the texts of each language are in
+# i18n/<lang>.js, and a page loads only those of the language shown and English (the fallback): about 60 KB instead
+# of 380. The loader writes their <script> while the page is read (document.write: they run before i18n.js, also
+# for a page opened as a file); another language chosen in the index menu is loaded then (i18n.js).
+_LOADER = r"""(function () {
+  var D = window.CEV_I18N, lang = null, w, i, c, k;
+  var known = function (x) { x = String(x || "").toLowerCase().split(/[-_]/)[0]; return D.languages.hasOwnProperty(x) ? x : null; };
+  try { lang = known(localStorage.getItem("cev-lang")); } catch (e) { /* no storage */ }
+  w = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language];
+  for (i = 0; !lang && i < w.length; i++) { lang = known(w[i]); }
+  lang = lang || D.default;
+  c = document.currentScript;
+  D.base = c ? c.src.replace(/i18n-data\.js(\?.*)?$/, "") : "";
+  k = lang === "en" ? ["en"] : ["en", lang];
+  for (i = 0; i < k.length; i++) { document.write('<script src="' + D.base + 'i18n/' + k[i] + '.js"><\/script>'); }
+})();
+"""
+
+
 def web_data_script() -> str:
-    """Content of i18n-data.js, written in the site folder."""
-    data = {"languages": LANGUAGES, "default": DEFAULT, "build": _current, "texts": web_catalogs()}
-    return "window.CEV_I18N = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n"
+    """Content of i18n-data.js, written in the site folder: the languages and the loader of their texts."""
+    data = {"languages": LANGUAGES, "default": DEFAULT, "build": _current, "texts": {}}
+    return "window.CEV_I18N = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n" + _LOADER
+
+
+def web_text_scripts() -> dict[str, str]:
+    """{lang: content of i18n/<lang>.js}: the texts the pages need in that language."""
+    return {lang: f"window.CEV_I18N.texts[{json.dumps(lang)}] = " + json.dumps(texts, ensure_ascii=False, separators=(",", ":"))
+            + ";\n" for lang, texts in web_catalogs().items()}

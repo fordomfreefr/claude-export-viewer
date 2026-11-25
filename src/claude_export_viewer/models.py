@@ -112,6 +112,18 @@ class ToolUseContent(TolerantModel):
         return self.name == "artifacts"
 
     @property
+    def widget(self) -> tuple[str, str] | None:
+        """(title, code) of a visual shown in the chat by claude.ai (tool show_widget of "visualize":
+        HTML without <html>/<body>, or SVG), else None."""
+        if not self.name.endswith("show_widget") or not isinstance(self.input, dict):
+            return None
+        code = self.input.get("widget_code")
+        if not isinstance(code, str) or not code.strip():
+            return None
+        title = self.input.get("title")
+        return (title if isinstance(title, str) else ""), code
+
+    @property
     def artifact_input(self) -> ArtifactInput | None:
         if not self.is_artifact:
             return None

@@ -1,0 +1,23 @@
+Bibliothèques incluses dans run-libs.js (bouton « Lancer »), assemblées par tools/build_run_libs.mjs.
+Libraries bundled in run-libs.js (button "Run"), built by tools/build_run_libs.mjs.
+
+React, ReactDOM, scheduler 19.x ............ MIT License, Copyright (c) Meta Platforms, Inc. and affiliates.
+Recharts 2.15.0 .............................. MIT License, Copyright (c) 2015-present recharts
+react-smooth 4.0.4, recharts-scale ............ MIT License, Copyright (c) 2015-present recharts
+react-transition-group 4.4.5 ................. BSD-3-Clause, Copyright (c) 2018, React Community
+dom-helpers 5.2.1 ............................ MIT License, Copyright (c) 2015 Jason Quense
+prop-types 15.8.1 ............................ MIT License, Copyright (c) 2013-present, Facebook, Inc.
+fast-equals 5.0.1 ............................ MIT License, Copyright (c) 2017 Tony Quetano
+eventemitter3 5.0.1 .......................... MIT License, Copyright (c) 2014 Arnout Kazemier
+decimal.js-light 2.5.1 ....................... MIT License, Copyright (c) 2018 Michael Mclaughlin
+lodash 4.17.21 ............................... MIT License, Copyright OpenJS Foundation and other contributors
+d3 7.x (d3-*) ................................ ISC License, Copyright 2010-2023 Mike Bostock
+lucide (icônes / icons) 0.469.0 .............. ISC License, Copyright (c) for portions of Lucide are held by Cole Bemis
+                                               2013-2022 as part of Feather (MIT). All other copyright for Lucide
+                                               are held by Lucide Contributors 2022.
+clsx 2.x ..................................... MIT License, Copyright (c) Luke Edwards
+Tailwind CSS 4.x ............................. MIT License, Copyright (c) Tailwind Labs, Inc.
+TypeScript 6.x ............................... Apache License 2.0, Copyright (c) Microsoft Corporation
+
+The full texts of these licences are in the repositories of each project (https://github.com/<project>).
+Les textes complets de ces licences sont dans le dépôt de chaque projet.

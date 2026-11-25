@@ -123,8 +123,8 @@ def test_windows_shortcuts(tmp_path: Path, monkeypatch) -> None:
     site = tmp_path / "clé USB" / "claude_site"
     written = desktop.install_windows(site, LAUNCHER, run=fake_powershell, env=env)
     icon = home / "AppData" / "Local" / "claude-export-viewer" / "icon.ico"
-    menu_lnk = home / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Archives Claude.lnk"
-    assert written == [icon, menu_lnk, home / "Desktop" / "Archives Claude.lnk"]
+    menu_lnk = home / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Bibliothèque Claude.lnk"
+    assert written == [icon, menu_lnk, home / "Desktop" / "Bibliothèque Claude.lnk"]
     assert icon.read_bytes()[:4] == b"\x00\x00\x01\x00"  # an .ico file
     assert len(calls) == 2
     cmd, values, kw = calls[0]
@@ -147,7 +147,7 @@ def test_windows_shortcut_failure_is_reported(tmp_path: Path, monkeypatch) -> No
 
 def test_shortcut_names_are_valid_file_names() -> None:
     assert desktop._file_name('Archives: "Claude"?') == "Archives Claude"
-    assert desktop._file_name("...") == "Claude Archives"
+    assert desktop._file_name("...") == "Claude Library"
 
 
 def test_pandoc_hint_follows_the_system(monkeypatch) -> None:

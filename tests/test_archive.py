@@ -1,15 +1,15 @@
 """Cumulative archive: successive exports, deletions, duplicates, incremental pages."""
 
 import json
-import re
 import zipfile
 from pathlib import Path
 
 from claude_export_viewer.cli import main
 
 
-def conv(uuid: str, text: str = "", name: str = "", updated: str = "2026-01-01T00:00:00Z") -> dict:
-    msgs = [{"uuid": f"{uuid}-m", "sender": "human", "content": [{"type": "text", "text": text}]}] if text else []
+def conv(uuid: str, text: str = "", name: str = "", updated: str = "2026-01-01T00:00:00Z",
+         sender: str = "human") -> dict:
+    msgs = [{"uuid": f"{uuid}-m", "sender": sender, "content": [{"type": "text", "text": text}]}] if text else []
     return {"uuid": uuid, "name": name or uuid, "updated_at": updated, "chat_messages": msgs}
 
 
@@ -54,7 +54,8 @@ def test_successive_exports_deletion_and_update(tmp_path: Path, capsys) -> None:
     index = (site / "index.html").read_text(encoding="utf-8")
     assert index.count('class="deleted-badge"') == 1
     assert 'id="filter-deleted"' in index
-    assert "3 conversations (dont 1 supprimée sur claude.ai, conservée ici)" in re.sub(r"<[^>]+>", "", index)
+    # 14/11: the count is written by the overview (its tile of the conversations says the deleted ones)
+    assert index.count('class="conversation-item"') == 3 and index.count('data-deleted="1"') == 1
 
 
 def test_emptied_shell_keeps_archived_copy(tmp_path: Path) -> None:
@@ -152,7 +153,7 @@ def test_export_date_read_from_zip_and_manifest(tmp_path: Path, capsys) -> None:
 def test_archive_survives_and_rebuilds_site(tmp_path: Path) -> None:
     """The site can be rebuilt from the archive alone (e.g. after a program update)."""
     site = tmp_path / "site"
-    run(site, str(export(tmp_path, "a", [conv("c1", "un $\\alpha$")])), "--date-export", "2026-09-01")
+    run(site, str(export(tmp_path, "a", [conv("c1", "un $\\alpha$", sender="assistant")])), "--date-export", "2026-09-01")
     for f in (site / "conversations").glob("*.html"):
         f.unlink()
     (site / "index.html").unlink()
