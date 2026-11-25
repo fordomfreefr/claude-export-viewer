@@ -90,6 +90,18 @@ def pandoc_hint() -> str:
     return "sudo apt install pandoc"
 
 
+# (25/11) Types that a double click may run instead of showing (Windows runs them directly): a document of an export
+# with one of these is never opened, its folder is (attachments in server._open_attachment)
+RUNNABLE = frozenset(
+    ".app .appimage .bash .bat .bin .cmd .com .command .cpl .csh .desktop .exe .hta .jar .js .jse .ksh .lnk .msi "
+    ".msp .pif .pl .ps1 .psm1 .py .pyw .reg .run .scpt .scr .sh .url .vb .vbe .vbs .workflow .wsf .wsh .zsh".split())
+
+
+def runnable(path: Path) -> bool:
+    """True when a double click on ``path`` could run it (by its extension)."""
+    return Path(path).suffix.lower() in RUNNABLE
+
+
 def open_file(path: Path) -> None:
     """Open a file with the program the computer associates with it (like a double click)."""
     if WINDOWS:

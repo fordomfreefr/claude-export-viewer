@@ -357,6 +357,7 @@
  "web.artifact.document": "文档",
  "web.artifact.mermaid": "Mermaid 图表",
  "web.artifact.react": "React 组件",
+ "web.attachment.folder_opened": "可执行文件：为安全起见，已打开其所在文件夹",
  "web.attachment.long": {
   "other": "长文档：{n} 个字符。"
  },

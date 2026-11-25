@@ -357,6 +357,7 @@
  "web.artifact.document": "문서",
  "web.artifact.mermaid": "Mermaid 다이어그램",
  "web.artifact.react": "React 컴포넌트",
+ "web.attachment.folder_opened": "실행 파일이므로 안전을 위해 폴더를 열었습니다",
  "web.attachment.long": {
   "other": "긴 문서: {n}자."
  },

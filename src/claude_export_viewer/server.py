@@ -684,12 +684,13 @@ class SiteHandler(SimpleHTTPRequestHandler):
         if target is None:
             self._text(404, t("server.not_in_archive", self._lang()))
             return
+        folder = system.runnable(target)  # (25/11) a file that could run: its folder only, never the file
         try:
-            system.open_file(target)
+            system.open_file(target.parent if folder else target)
         except OSError as exc:
             self._text(500, t("cli.error", self._lang(), message=exc))
             return
-        self._json(200, {"opened": str(target)})
+        self._json(200, {"opened": str(target), "folder": folder})
 
     def _change_links(self, key: str, change: Callable[[Archive, str], bool]) -> None:
         """Run ``change(archive, uuid)`` for the page ``key`` (never during a job), then

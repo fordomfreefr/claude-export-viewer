@@ -182,12 +182,13 @@ def test_artifact_limit_uses_real_sizes(tmp_path: Path, monkeypatch) -> None:
 
 # --- B1: the libraries downloaded follow redirections to https only (to esm.sh only for its packages) ---------------
 
-def test_download_redirections_kept_to_https() -> None:
+def test_download_redirections_kept_to_https(monkeypatch) -> None:
     import email.message
     import urllib.error
     import urllib.request
 
     from claude_export_viewer import cdn_cache, esm_cache
+    monkeypatch.setattr(cdn_cache, "public_host", lambda h: h == "autre.example")  # no DNS in the tests (25/11)
 
     req, headers = urllib.request.Request("https://cdn.example/lib.js"), email.message.Message()
 

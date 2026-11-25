@@ -357,6 +357,7 @@
  "web.artifact.document": "ドキュメント",
  "web.artifact.mermaid": "Mermaid 図",
  "web.artifact.react": "React コンポーネント",
+ "web.attachment.folder_opened": "実行可能ファイルのため、安全のためフォルダーを開きました",
  "web.attachment.long": {
   "other": "長い文書：{n} 文字。"
  },

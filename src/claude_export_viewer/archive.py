@@ -31,6 +31,7 @@ import re
 import shutil
 import tempfile
 import time
+import zlib
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -186,6 +187,13 @@ def write_raw(path: Path, raw: dict[str, Any]) -> None:
 
 def iter_raw_file(path: Path) -> Iterator[tuple[Any, ...]]:
     """("meta", fields) then ("item", key, element) one by one; the former whole form is given the same way."""
+    try:
+        yield from _iter_raw_file(path)
+    except (EOFError, zlib.error) as exc:  # a gzip cut short or damaged: a ValueError too (25/11)
+        raise ValueError(f"conversation : fichier tronqué ou abîmé ({exc})") from None
+
+
+def _iter_raw_file(path: Path) -> Iterator[tuple[Any, ...]]:
     with gzip.open(path, "rt", encoding="utf-8") as f:
         if not path.name.endswith(RAW_SUFFIX):  # the former form: one JSON document
             raw = json.load(f)
@@ -200,10 +208,16 @@ def iter_raw_file(path: Path) -> Iterator[tuple[Any, ...]]:
         head = json.loads(f.readline())
         if not isinstance(head, dict) or head.get("cev") != RAW_FORMAT or not isinstance(head.get("meta"), dict):
             raise ValueError("conversation : en-tête illisible")
+        lists = {k for k, v in head["meta"].items() if v == []}  # before the caller fills the meta (read_raw_file)
         yield ("meta", head["meta"])
-        for line in f:
-            key, item = json.loads(line)
-            if key not in head["meta"]:
+        for n, line in enumerate(f, 2):
+            # (25/11, Gemini audit) a damaged line is always a ValueError: never a TypeError of the unpacking (a number,
+            # a list of 3) or an AttributeError later (a key whose value in the header is not an empty list)
+            try:
+                key, item = json.loads(line)
+            except (ValueError, TypeError):
+                raise ValueError(f"conversation : ligne {n} illisible") from None
+            if not isinstance(key, str) or key not in lists:
                 raise ValueError(f"conversation : liste inconnue {key!r}")
             yield ("item", key, item)
 

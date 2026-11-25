@@ -36,8 +36,15 @@
     post("/__cev__/open", { path: link.getAttribute("data-open") })
       .then(function (r) {
         link.classList.toggle("failed", !r.ok);
-        link.title = CEV.t(r.ok ? "web.attachment.opened" : "web.attachment.open_failed");
-        if (!r.ok) { window.open(link.href, "_blank"); }  // at least show it in the browser
+        if (!r.ok) {
+          link.title = CEV.t("web.attachment.open_failed");
+          window.open(link.href, "_blank");  // at least show it in the browser
+          return;
+        }
+        // (25/11) a file that could run: the server opened its folder only
+        return r.json().then(function (data) {
+          link.title = CEV.t(data && data.folder ? "web.attachment.folder_opened" : "web.attachment.opened");
+        });
       })
       .catch(function () { window.open(link.href, "_blank"); });
   }

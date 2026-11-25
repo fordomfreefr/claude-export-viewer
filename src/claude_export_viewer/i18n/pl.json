@@ -417,6 +417,7 @@
  "web.artifact.document": "Dokument",
  "web.artifact.mermaid": "Diagram Mermaid",
  "web.artifact.react": "Komponent React",
+ "web.attachment.folder_opened": "Plik wykonywalny: dla bezpieczeństwa otwarto jego folder",
  "web.attachment.long": {
   "few": "Długi dokument: {n} znaki.",
   "many": "Długi dokument: {n} znaków.",

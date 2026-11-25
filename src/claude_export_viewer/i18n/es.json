@@ -377,6 +377,7 @@
  "web.artifact.document": "Documento",
  "web.artifact.mermaid": "Diagrama Mermaid",
  "web.artifact.react": "Componente React",
+ "web.attachment.folder_opened": "Archivo ejecutable: por precaución se abrió su carpeta",
  "web.attachment.long": {
   "one": "Documento largo: {n} carácter.",
   "other": "Documento largo: {n} caracteres."

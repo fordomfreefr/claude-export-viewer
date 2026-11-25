@@ -40,6 +40,7 @@ FOLDER = "extras"                    # in the site folder: the pages, and artifa
 ARTIFACTS = "artifacts"
 SAFE_ID = re.compile(r"^[\w.-]{1,100}$")
 MAX_VERSION = 300 * 1024 * 1024      # bytes of one version extracted
+MAX_META = 20 * 1024 * 1024         # bytes of one JSON describing an artifact (artifact.json, .files.json, canvas.json)
 _DATE = re.compile(r"^(\d{4}-\d{2}-\d{2})")
 
 
@@ -220,6 +221,8 @@ def artifacts(site_dir: Path) -> list[Artifact]:
 
                 def load(name: str) -> Any:
                     try:
+                        if f.getinfo(name).file_size > MAX_META:  # (25/11, Gemini audit) never read a huge JSON
+                            return None
                         return json.loads(f.read(name).decode("utf-8"))
                     except (KeyError, ValueError, UnicodeDecodeError, OSError):
                         return None
@@ -282,8 +285,12 @@ def extract(site_dir: Path, art_id: str, version: str) -> Path:
     shutil.rmtree(tmp, ignore_errors=True)
     try:
         with zipfile.ZipFile(art.zip) as f:
+            root = tmp.resolve()
             for x in ver.files:
                 out = tmp / x["path"]
+                # (25/11, Gemini audit) defence in depth after _safe_path: the final path stays in the folder
+                if not out.resolve().is_relative_to(root) or out.resolve() == root:
+                    raise ValueError(f"chemin refusé : {x['path']!r}")
                 out.parent.mkdir(parents=True, exist_ok=True)
                 with f.open(x["member"]) as src, open(out, "wb") as dst:
                     shutil.copyfileobj(src, dst)

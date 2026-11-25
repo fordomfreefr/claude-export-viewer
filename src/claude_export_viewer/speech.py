@@ -38,7 +38,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from . import i18n, settings, system
+from . import cdn_cache, i18n, settings, system
 from .i18n import t
 
 DEFAULTS = {  # "Moi", Claude
@@ -419,7 +419,9 @@ def _venv(env: Path) -> None:
     if not _bin(env, "pip").is_file():
         script = env / "get-pip.py"
         try:
-            with urllib.request.urlopen(GET_PIP, timeout=120) as r:
+            # (25/11) https only, redirections kept to bootstrap.pypa.io (a fingerprint is impossible: the file
+            # changes with every version of pip)
+            with cdn_cache.open_https(GET_PIP, 120, host="bootstrap.pypa.io") as r:
                 script.write_bytes(r.read())
         except (OSError, urllib.error.URLError) as exc:
             raise SpeechError("server.speak.failed", message=f"{GET_PIP}: {exc}") from exc

@@ -377,6 +377,7 @@
  "web.artifact.document": "Document",
  "web.artifact.mermaid": "Mermaid-diagram",
  "web.artifact.react": "React-component",
+ "web.attachment.folder_opened": "Uitvoerbaar bestand: voor de veiligheid is de map geopend",
  "web.attachment.long": {
   "one": "Lang document: {n} teken.",
   "other": "Lang document: {n} tekens."

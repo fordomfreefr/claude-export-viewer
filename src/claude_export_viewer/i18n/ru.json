@@ -417,6 +417,7 @@
  "web.artifact.document": "Документ",
  "web.artifact.mermaid": "Диаграмма Mermaid",
  "web.artifact.react": "Компонент React",
+ "web.attachment.folder_opened": "Исполняемый файл: из предосторожности открыта его папка",
  "web.attachment.long": {
   "few": "Длинный документ: {n} символа.",
   "many": "Длинный документ: {n} символов.",

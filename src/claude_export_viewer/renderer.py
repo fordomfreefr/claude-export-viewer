@@ -80,6 +80,7 @@ PREVIEW_LINES = 10
 _TRIANGLE = '<span class="cev-tri" aria-hidden="true">&#9654;&#xFE0E;</span> '
 _FOLD_ICON = icons.svg("fold", 16, "fold-icon")
 _COPY_SVG = icons.svg("copy", 12)
+_COPY_LABEL = ' class="copy-label"'  # (25/11) outside the f-string: quotes reused in one are an error under Python 3.11
 
 
 def _long(code: str) -> bool:
@@ -99,7 +100,7 @@ def code_block(code: str, lang: str | None, foldable: bool = True) -> str:
         f'<span class="code-lang">{_TRIANGLE if long else ""}{label}</span>'
         # (22/11) the icon "copy" of the messages too, before the word
         + f'<button type="button" class="copy-btn" title="{html.escape(t("web.copy_title"))}"'
-          f' data-i18n-attr="title:web.copy_title">{_COPY_SVG}{html_text("web.copy", "span", ' class="copy-label"')}</button>'
+          f' data-i18n-attr="title:web.copy_title">{_COPY_SVG}{html_text("web.copy", "span", _COPY_LABEL)}</button>'
         + (_FOLD_ICON if long else "")
         + "</div>"
         f"<pre class='highlight' translate='no'><code{lang_class}>{highlighted}</code></pre>"
